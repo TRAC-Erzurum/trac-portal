@@ -1,0 +1,7 @@
+services:
+  api:
+    volumes:
+      - ./uploads:/uploads
+  ui:
+    volumes:
+      - ./certs:/etc/letsencrypt

@@ -1,0 +1,87 @@
+name: trac-portal
+
+services:
+  ui:
+    container_name: trac-portal-ui
+    image: ghcr.io/trac-erzurum/trac-portal-ui:${TAG:-latest}
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${DOMAIN}
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/www/certbot:/var/www/certbot
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - trac-network
+
+  api:
+    container_name: trac-portal-api
+    image: ghcr.io/trac-erzurum/trac-portal-api:${TAG:-latest}
+    expose:
+      - "8000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=8000
+      - DOMAIN=${DOMAIN}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USERNAME=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME:-trac_db}
+      - DB_SSL=false
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-24h}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALLBACK_URL=http://${DOMAIN}/api/auth/google/callback
+    volumes:
+      - ./volumes/uploads:/app/uploads
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8000/api/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - trac-network
+
+  db:
+    container_name: trac-db
+    image: postgres:16-alpine
+    expose:
+      - "5432"
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME:-trac_db}
+    volumes:
+      - ./volumes/db:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - trac-network
+
+  certbot:
+    image: certbot/certbot
+    container_name: trac-certbot
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/www/certbot:/var/www/certbot
+    command: renew
+    depends_on:
+      - ui
+
+networks:
+  trac-network:
+    name: trac-network

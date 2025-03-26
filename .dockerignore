@@ -1,0 +1,10 @@
+.git
+.gitignore
+node_modules
+*.log
+.env*
+.vscode
+.idea
+coverage
+test
+README.md 

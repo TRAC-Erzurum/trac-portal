@@ -1,0 +1,12 @@
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/TRAC-Erzurum/trac-portal-ui.git
+[submodule "backend"]
+	path = backend
+	url = https://github.com/TRAC-Erzurum/trac-portal-api.git
+[submodule "trac-portal-ui"]
+	path = trac-portal-ui
+	url = https://github.com/TRAC-Erzurum/trac-portal-ui.git
+[submodule "trac-portal-api"]
+	path = trac-portal-api
+	url = https://github.com/TRAC-Erzurum/trac-portal-api.git
