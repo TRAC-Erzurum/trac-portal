@@ -1,3 +1,8 @@
+[![API Build](https://github.com/TRAC-Erzurum/trac-portal-api/actions/workflows/docker-ghrc.yaml/badge.svg)](https://github.com/TRAC-Erzurum/trac-portal-api/actions/workflows/docker-ghrc.yaml)
+[![UI Build](https://github.com/TRAC-Erzurum/trac-portal-ui/actions/workflows/docker-ghrc.yaml/badge.svg)](https://github.com/TRAC-Erzurum/trac-portal-ui/actions/workflows/docker-ghrc.yaml)
+
+---
+
 # TRAC Erzurum Operatör ve Çevrim Yönetim Sistemi
 
 Operatör ve Çevrim Yönetim Sistemi, amatör telsiz operatörlerinin günlük çevrimlere katılımını yönetmek, istatistiklerini tutmak ve performanslarını takip etmek için TRAC Erzurum Şubesi destekleriyle TA9MFE tarafından geliştirilmiş bir web uygulamasıdır.
@@ -6,143 +11,80 @@ Operatör ve Çevrim Yönetim Sistemi, amatör telsiz operatörlerinin günlük 
 
 Amatör bir hobi olan telsizcilik faliyetlerinde önemli bir yer alan çevrimlerin yönetiminde ve arşivlenmesinde farkedilen eksikliği giderme amacıyla yola çıkılmıştır. Daha sonra yapılan istişareler ve alınan kararlar neticesinde bir çevrim yönetim sistemi olmaktan çok amatör telsizcilerin kendi amatör kimliklerini yönetebildikleri bir sistem halini almıştır.
 
-Temel özellikleri:
+### Temel özellikleri:
+
 - Günlük çevrimlerin yönetimi
 - Operatör katılım takibi
 - Detaylı istatistik raporları
 - Operatör performans analizi
 
-## Teknik Altyapı
+## Katkıda Bulunma
 
-Proje iki ana bileşenden oluşmaktadır:
+Gönüllülük esasıyla geliştirilen bu proje, katkı sunmak isteyen tüm gönüllülerin desteğine açıktır. Teknik altyapınız olsun veya olmasın projeye katkıda bulunabilirsiniz. Aşağıda yer alan alanlardan birinde katkı sağlamak isterseniz bizimle iletişime geçebilirsiniz.
 
-### Backend (API)
-- [NestJS](https://nestjs.com/) framework'ü üzerine inşa edilmiştir
+### Yazılım Geliştirme
+
+Projede ağırlıklı olarak frontend developer ihtiyacı bulunmaktadır. Arayüz geliştirme deneyiminiz veya öğrenme isteğiniz varsa bizimle iletişime geçebilirsiniz.
+
+Ayrıca backend geliştirme, CI/CD ve teknik dökümantasyon konusunda yardımcı olmak isteyen gönüllüler de katkı sunmak istediği taktirde iletişime geçebilirler.
+
+#### Backend (API)
+
+- [NestJS](https://nestjs.com/) framework üzerine inşa edilmiştir
 - TypeScript ile geliştirilmiştir
 - PostgreSQL veritabanı kullanılmaktadır
 
-### Frontend (Web Arayüzü)
-- [Nuxt 3](https://nuxt.com/) framework'ü kullanılmaktadır
-- Vue.js tabanlı modern bir arayüz
-- TypeScript desteği
-- Vuetify component framework'ü
+Backend projesine [katkıda bulunun.](./trac-portal-api/README.md)
 
-## Geliştirme Ortamının Hazırlanması
+#### Frontend (Web Arayüzü)
 
-Her bir bileşen için detaylı kurulum talimatlarına aşağıdaki bağlantılardan ulaşabilirsiniz:
+- [Nuxt 3](https://nuxt.com/) framework üzerine geliştirilmiştir
+- Vue.js tabanlı modern bir arayüz sunmaktadır
+- Vuetify component kullanılmıştır
 
-- [Backend Kurulum Talimatları](./backend/README.md)
-- [Frontend Kurulum Talimatları](./frontend/README.md)
+Frontend projesine [katkıda bulunun.](./trac-portal-ui/README.md)
 
-## Docker ile Geliştirme Ortamı
+### QA/Test
 
-Projeyi Docker ile çalıştırmak için:
+Projede kalite standardını yüksek tutmak için test süreçlerinin oturtulmasına ihtiyacımız var. Bu konuda yardımcı olmak isteyen QA/Test mühendisleri bizimle iletişim kurabilirler.
 
-```bash
-# Geliştirme ortamını başlatmak için
-docker-compose up --build -d
+### Ürün Yönetimi ve Dökümantasyon
 
-# Logları görüntülemek için
-docker-compose logs -f
+Projenin yol haritasını çizmede bize yardımcı olacak ürün yöneticilerine ihtiyaç duymaktayız.
 
-# Servisleri durdurmak için
-docker-compose down
-```
+## Sık Sorulan Sorular
 
-## Deployment (Canlı Ortam)
+**1. Yazılım geliştiricisiyim, katkı sunmak istiyorum, ne yapmam gerekiyor?**
 
-### GitHub Actions ve Container Registry
+Proje belli olgunluğa gelinceye kadar kaynak kodları yalnızca belirli kişiler tarafından erişilebilir durumda olacaktır. Burada amaç, kod kalitesini ve kültürünü oturtmayı kolaylaştırmaktır.
 
-Proje, GitHub Actions kullanılarak otomatik olarak build edilir ve GitHub Container Registry'ye (ghcr.io) push edilir. İki farklı mod bulunmaktadır:
+Projenin issue takibi [github issues](https://github.com/TRAC-Erzurum/trac-portal/issues) sayfasından yapılmaktadır. Kaynak kodlara erişmek ve burada yer alan issuelara katkı sunmak için [katkıda bulunma](./docs/contribution.md) dökümanını takip edebilirsiniz.
 
-- Development (dev) modu: `dev` branche yapılan her pushta tetiklenir. `dev-build.{{build_id}}` etiketi ile versiyonlanır. Ayrıca son güncel dev buildi `dev` etiketine sahiptir.
-- Release modu: Yeni bir tag oluşturulduğunda tetiklenerek tag adı ile versiyonlanır. Ayrıca son güncel release buildi `latest` etiketine sahiptir.
+**2. QA/Test mühendisiyim, katkı sunmak istiyorum, ne yapmam gerekiyor?**
 
-### Production Ortamına Kurulum
+Ürünü inceleyerek başlayabilirsiniz. Gördüğünüz hata/bug/sorunları bize bildirmenizi bekliyoruz. Sorun bildirme ile alakalı detaylı bilgiye [buradan](./docs/bug-reporting.md) ulaşabilirsiniz.
 
-1. Sunucunuzda Docker ve Docker Compose'un kurulu olduğundan emin olun
-2. Production ortamı için gerekli environment değişkenlerini ayarlayın
-3. Container'ları çekin ve başlatın:
+Test otomasyon sürecine katkıda bulunmak isterseniz [katkıda bulunma](./docs/contribution.md) dökümanını okuyabilirsiniz.
 
-```bash
-# Production ortamı için docker-compose dosyasını kullanarak
-docker-compose -f docker-compose.prod.yml pull
-docker-compose -f docker-compose.prod.yml up -d
-```
+**3. Ürün yönetimi deneyimim var, katkı sunmak istiyorum, ne yapmam gerekiyor?**
 
-### Environment Değişkenleri
+İlk aşamada ürünü kullanmanızı ve bize geri bildirim vermenizi bekliyoruz. Geri bildirim ile alakalı detaylı bilgiye [buradan](./docs/feedback.md) ulaşabilirsiniz.
 
-Production ortamı için gerekli environment değişkenleri:
+**4. Hiçbir teknik altyapım yok, ben nasıl katkı sunabilirim?**
 
-```env
-# Backend
-DATABASE_URL=postgresql://user:password@db:5432/dbname
-JWT_SECRET=your-secret-key
-API_PORT=3000
+Ürünün geniş kitlelerce kullanılmaası bizim için en büyük motivasyon kaynağı. Lütfen aktif olarak ürünü kullanın. Unutmayın, bu proje sizler için ve sizlerin sayesinde var.
 
-# Frontend
-API_BASE_URL=https://api.example.com
-```
+Ürünü kullanırken farkettiğiniz her problem için [burada](./docs/bug-reporting.md) yer alan talimatları takip ederek bildirimde bulunabilirsiniz.
 
-## Katkıda Bulunma
-
-Bu proje açık kaynak bir projedir ve katkılarınızı bekliyoruz. Katkıda bulunmak için aşağıdaki adımları takip edebilirsiniz:
-
-### Geliştirme Ortamının Hazırlanması
-
-1. Projeyi forklayın
-2. Yeni bir feature branch oluşturun (`git checkout -b feature/amazing-feature`)
-3. Gerekli bağımlılıkları yükleyin:
-   ```bash
-   # Backend için
-   cd backend && yarn install
-   
-   # Frontend için
-   cd frontend && yarn install
-   ```
-4. Geliştirme ortamını Docker ile başlatın:
-   ```bash
-   docker-compose up --build -d
-   ```
-
-### Branch Politikası
-
-- `master` ve `dev` branchleri korumalı branchlerdir
-- Tüm geliştirmeler `dev` branchinden türetilen feature branchlerinde yapılmalıdır
-- Pull requestler `dev` branchine açılmalıdır
-
-### Pull Request Kuralları
-
-1. **Branch İsimlendirmesi**
-   - Feature için: `feature/özellik-adı`
-   - Bug fix için: `fix/hata-açıklaması`
-   - Hotfix için: `hotfix/acil-düzeltme`
-
-2. **Commit Mesajları**
-   - İngilizce yazılmalıdır
-   - Açıklayıcı ve kısa olmalıdır
-   - Örnek format: `feat: add new attendee list`
-
-3. **PR İçeriği**
-   - Her PR tek bir amaca hizmet etmelidir
-   - PR açıklaması şablona uygun doldurulmalıdır
-   - Yapılan değişikliklerin test edildiğinden emin olunmalıdır
-   - Conflict olmamalıdır
-
-4. **Code Review**
-   - PR'ın merge edilebilmesi için en az bir onay gereklidir
-   - Review yorumları yapıcı ve açıklayıcı olmalıdır
-   - Tüm CI/CD kontrolleri başarılı olmalıdır
-
-5. **Dokümantasyon**
-   - Yeni özellikler için dokümantasyon güncellenmelidir
+Üründe olması gerektiğini düşündüğünüz yeni özellikler için [burada](./docs/feedback.md) yer alan talimatları takip ederek geri bildirimde bulunabilirsiniz.
 
 ## Lisans
 
 Bu proje [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](LICENSE) altında lisanslanmıştır.
 
 Bu lisans kapsamında:
+
 - ✅ Projeyi paylaşabilir ve uyarlayabilirsiniz
 - ✅ Kaynak göstermek zorundasınız
 - ❌ Ticari amaçla kullanamazsınız
-- ✅ Değişiklik yaptığınız versiyonları aynı lisans ile paylaşmalısınız 
+- ✅ Değişiklik yaptığınız versiyonları aynı lisans ile paylaşmalısınız
