@@ -33,7 +33,7 @@ services:
       - DOMAIN=${DOMAIN}
       - DB_HOST=db
       - DB_PORT=5432
-      - DB_USERNAME=${DB_USER:-postgres}
+      - DB_USERNAME=${DB_USERNAME:-postgres}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME:-trac_db}
       - DB_SSL=false
@@ -61,13 +61,13 @@ services:
     expose:
       - "5432"
     environment:
-      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_USER=${DB_USERNAME:-postgres}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME:-trac_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}" ]
       interval: 5s
       timeout: 5s
       retries: 5
