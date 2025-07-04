@@ -4,16 +4,17 @@ services:
   ui:
     container_name: trac-portal-ui-local
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: ./trac-portal-ui
+      dockerfile: Dockerfile.local
     ports:
-      - "80:80"
-      - "443:443"
+      - "3000:3000"
     environment:
       - DOMAIN=${DOMAIN}
+      - NODE_ENV=development
+      - API_BASE_URL=http://localhost:8000/api
     volumes:
-      - /etc/letsencrypt:/etc/letsencrypt
-      - /var/www/certbot:/var/www/certbot
+      - ./trac-portal-ui:/app
+      - /app/node_modules
     depends_on:
       api:
         condition: service_healthy
@@ -23,10 +24,10 @@ services:
   api:
     container_name: trac-portal-api-local
     build:
-      context: ./backend
-      dockerfile: Dockerfile
-    expose:
-      - "8000"
+      context: ./trac-portal-api
+      dockerfile: Dockerfile.local
+    ports:
+      - "8000:8000"
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT=8000
@@ -44,6 +45,9 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_CALLBACK_URL=http://${DOMAIN}/api/auth/google/callback
+    volumes:
+      - ./trac-portal-api:/app
+      - /app/node_modules
     healthcheck:
       test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8000/api/health" ]
       interval: 10s
@@ -58,8 +62,8 @@ services:
   db:
     container_name: trac-db-local
     image: postgres:16-alpine
-    expose:
-      - "5432"
+    ports:
+      - "5432:5432"
     environment:
       - POSTGRES_USER=${DB_USERNAME:-postgres}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
