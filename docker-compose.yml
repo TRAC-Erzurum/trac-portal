@@ -39,7 +39,7 @@ services:
       - SESSION_SECRET=${SESSION_SECRET}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - GOOGLE_CALLBACK_URL=http://${DOMAIN}/api/auth/google/callback
+      - GOOGLE_CALLBACK_URL=https://${DOMAIN}/api/auth/google/callback
     volumes:
       - ./volumes/uploads:/app/uploads
     healthcheck:
