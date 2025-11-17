@@ -4,7 +4,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-TRAC Erzurum Operatör ve Çevrim Yönetim Sistemi - A web application for managing amateur radio operator sessions and tracking participation. This is a volunteer-led open source project developed by TA9MFE with support from TRAC Erzurum.
+TRAC Erzurum Operatör ve Çevrim Yönetim Sistemi - A web application for managing amateur radio operator nets and tracking participation. This is a volunteer-led open source project developed by TA9MFE with support from TRAC Erzurum.
 
 The project is a monorepo containing two git submodules:
 - **trac-portal-api**: NestJS backend API (TypeScript)
@@ -24,7 +24,7 @@ Built with **NestJS** and TypeScript. Main modules:
 - `auth/` - Authentication (JWT + Google OAuth)
 - `user/` - User management
 - `operator/` - Amateur radio operator profiles
-- `session/` - Session management with attendee tracking
+- `net/` - Net management with attendee tracking
 - `qth/` - QTH (location) data
 - `dashboard/` - Dashboard data aggregation
 - `shared/` - Shared utilities and filters
