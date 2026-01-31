@@ -1,0 +1,29 @@
+---
+alwaysApply: true
+---
+# Component Patterns
+
+## Data Editing Strategy
+ALWAYS use Sheet/Drawer pattern for editing:
+- Click item → Opens Sheet from right
+- Sheet contains form
+- Save/Cancel in Sheet footer
+- NEVER use inline editing
+- NEVER navigate to separate edit page
+- NEVER use centered modals for forms (only for confirmations)
+
+## Form Layout
+- Single column layout
+- Labels above inputs
+- Error messages below inputs
+- Submit button right-aligned
+
+## Lists/Tables
+- Use DataTable for >5 columns
+- Use Card list for ≤5 columns or mobile
+- Always show empty state
+- Always show loading skeleton
+
+## Confirmations
+- Use AlertDialog for destructive actions
+- Use Toast for success/info messages

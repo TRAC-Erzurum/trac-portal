@@ -1,0 +1,19 @@
+---
+alwaysApply: true
+---
+# API Patterns
+
+## HTTP Client
+- Use typed fetch wrapper
+- All responses typed with TypeScript interfaces
+- Centralized error handling
+
+## Authentication
+- JWT in httpOnly cookie (not localStorage)
+- Refresh token rotation
+- Auto-logout on 401
+
+## Data Fetching
+- Use TanStack Query for caching
+- Loading states via Suspense or explicit
+- Optimistic updates for better UX

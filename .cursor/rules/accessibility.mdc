@@ -1,0 +1,19 @@
+---
+alwaysApply: true
+---
+# Accessibility Rules
+
+## Keyboard Navigation
+- All interactive elements focusable
+- Visible focus indicators
+- Escape closes modals/sheets
+
+## Screen Readers
+- Meaningful alt texts
+- ARIA labels on icon-only buttons
+- Announce dynamic content changes
+
+## Color Contrast
+- Minimum 4.5:1 for normal text
+- Minimum 3:1 for large text
+- Never rely on color alone
