@@ -1,33 +1,22 @@
 ---
 alwaysApply: true
 ---
-# Design System Rules
+# Design System
 
 ## Colors
-- Base: Zinc (neutral gray)
-- Primary accent: TRAC Blue (#0c0563 based, oklch 275 hue)
-- Dark mode background: oklch(0.141 0.005 285.82) - neutral dark gray
-- Light mode background: oklch(1 0 0)
-- TRAC blue used only for: buttons, links, highlights
-- Always use CSS variables, never hardcode colors
-
-## Spacing
-- Use 4px grid system (4, 8, 12, 16, 24, 32, 48, 64)
-- Tailwind: space-1 = 4px, space-2 = 8px...
+- Base: Zinc gray
+- Primary: TRAC Blue (#0c0563)
+- Use CSS variables, never hardcode
 
 ## Typography
-- Font: Rajdhani (local)
-- Weights: 300 (Light), 400 (Regular), 500 (Medium), 600 (SemiBold), 700 (Bold)
-- Fallback: system-ui, -apple-system, sans-serif
-- Sizes: text-sm, text-base, text-lg, text-xl, text-2xl
-- Headings: font-semibold (600) or font-bold (700)
-- Body: font-normal (400) or font-medium (500)
+- Font: Rajdhani
+- Section title: `text-sm font-medium text-muted-foreground`
+- Field label: `text-xs text-muted-foreground`
+- Field value: `font-medium`
 
 ## Border Radius
-- Small elements: rounded-md (6px)
-- Cards/containers: rounded-lg (8px)
-- Pills/badges: rounded-full
+- Elements: `rounded-md` or `rounded-lg`
+- Badges: `rounded-full`
 
 ## Shadows
-- Minimal shadows, prefer border definition
-- Dark mode: no shadows, use border-border
+- Minimal - prefer border definition

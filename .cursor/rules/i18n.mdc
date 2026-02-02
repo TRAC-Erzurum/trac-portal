@@ -1,82 +1,21 @@
 ---
-description: Internationalization (i18n) rules for TRAC Portal
-globs: ["trac-portal-ui/v2/**/*.vue", "trac-portal-ui/v2/**/*.ts", "trac-portal-api/**/*.ts"]
+alwaysApply: true
 ---
+# Internationalization
 
-# Internationalization Rules
+## Rules
+- No hardcoded text - use `t()` for all user-visible text
+- TR and EN must stay in sync
+- Backend returns i18n keys, not raw text
 
-## General Principles
-
-1. **No hardcoded text in Vue components** - All user-visible text must use i18n
-2. **TR and EN must be in sync** - When adding a translation key, add it to BOTH locales
-3. **Backend returns i18n keys** - API error messages must be translation keys, not raw text
-
-## Frontend (Vue)
-
-### File Structure
-```
-src/i18n/
-├── index.ts          # i18n configuration
-└── locales/
-    ├── tr.json       # Turkish translations
-    └── en.json       # English translations (fallback)
-```
-
-### Usage in Components
+## Usage
 ```vue
-<script setup>
-import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
-</script>
-
-<template>
-  <button>{{ t('common.save') }}</button>
-</template>
+{{ t('common.save') }}
 ```
 
-### Error Handling
+## Error Handling
 ```typescript
 import { translateError } from '@/i18n'
-
-catch (e) {
-  const error = e as ApiError
-  toast.error(translateError(error.message))
-}
+toast.error(translateError(error.message))
 ```
-
-## Backend (NestJS)
-
-### Error Messages
-Always return i18n keys, not raw messages:
-
-```typescript
-// ✅ Correct
-throw new UnauthorizedException('error.invalidCredentials')
-
-// ❌ Wrong
-throw new UnauthorizedException('Invalid credentials')
-```
-
-### Standard Error Keys
-- `error.invalidCredentials` - Login failed
-- `error.userNotFound` - User not found
-- `error.userAlreadyExists` - Email already registered
-- `error.operatorAlreadyExists` - Call sign already registered
-- `error.unauthorized` - Not logged in
-- `error.forbidden` - No permission
-- `error.serverError` - Generic server error
-- `error.captchaRequired` - CAPTCHA token missing
-- `error.captchaFailed` - CAPTCHA verification failed
-
-## Adding New Translations
-
-1. Add key to `tr.json`
-2. Add same key to `en.json`
-3. Use the key in component/backend
-4. Never commit with missing translations in either file
-
-## Language Detection
-
-- Default: Browser language (`navigator.language`)
-- Fallback: English (`en`)
-- User preference: Stored in settings (TODO)

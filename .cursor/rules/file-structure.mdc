@@ -4,51 +4,36 @@ globs: trac-portal-ui/v2/**/*
 ---
 # File Structure Rules
 
-## Project Root (trac-portal-ui/)
-- v2/               → New Vue 3 + Vite application
-- app/              → Legacy Nuxt application (to be removed)
-- ROADMAP.md        → Project plan and decisions log
-
 ## Source Structure (v2/src/)
 ```
-v2/
-├── src/
-│   ├── assets/
-│   │   └── styles/
-│   │       └── globals.css      → Tailwind + CSS variables
-│   ├── components/
-│   │   ├── ui/                  → shadcn-vue (auto-generated, don't edit)
-│   │   ├── layout/              → AppSidebar, BottomNav, PageHeader
-│   │   ├── forms/               → NetForm, UserForm, OperatorForm
-│   │   └── features/            → NetCard, AttendeeList, StatCard
-│   ├── composables/             → useAuth, useApi, useToast
-│   ├── lib/                     → Utility functions (cn, etc.)
-│   ├── pages/                   → Route views
-│   │   ├── auth/                → LoginPage, RegisterPage
-│   │   ├── dashboard/           → DashboardPage
-│   │   ├── nets/                → NetListPage, NetDetailPage
-│   │   ├── operators/           → OperatorListPage
-│   │   └── settings/            → SettingsPage
-│   ├── router/                  → Vue Router configuration
-│   ├── stores/                  → Pinia stores
-│   ├── types/                   → TypeScript interfaces
-│   ├── App.vue
-│   └── main.ts
-├── index.html
-├── package.json
-├── vite.config.ts
-├── tailwind.config.ts
-└── tsconfig.json
+v2/src/
+  composables/     # Vue reactive helpers (useX, getX)
+  lib/             # Pure utilities (formatters, ui-helpers, api)
+  components/
+    ui/            # shadcn-vue (auto-generated, don't edit)
+    shared/        # Reusable across features (NetCard, OperatorCard)
+    [feature]/     # Feature-specific (nets/, dashboard/, profile/)
+  pages/           # Route views
+  stores/          # Pinia stores
+  i18n/            # Internationalization
 ```
 
-## Naming Conventions
-- Components: PascalCase (NetCard.vue)
-- Composables: useCamelCase (useAuth.ts)
-- Stores: camelCase (auth.ts) exporting useAuthStore
-- Pages: PascalCase + Page suffix (LoginPage.vue)
-- Types: PascalCase + interface/type (NetResponse, UserType)
+## When to Use What
 
-## Import Aliases
-- @/ → src/
-- @/components → src/components
-- @/composables → src/composables
+| Need | Location |
+|------|----------|
+| Shared UI component | `components/shared/` |
+| Feature UI component | `components/[feature]/` |
+| Vue reactive logic | `composables/` |
+| Pure utility | `lib/` |
+
+## Existing Utilities (check before creating new)
+```typescript
+import { getAvatarUrl } from '@/composables'
+import { formatDateTime, formatCallSign } from '@/lib/formatters'
+import { getRoleBadgeClass } from '@/lib/ui-helpers'
+import { NetCard, OperatorCard } from '@/components/shared'
+```
+
+## Package Manager
+- **Always use yarn**, never npm

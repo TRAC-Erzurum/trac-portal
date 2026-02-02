@@ -3,26 +3,26 @@ alwaysApply: true
 ---
 # Component Patterns
 
-## Data Editing Strategy
-ALWAYS use Sheet/Drawer pattern for editing:
+## Buttons
+- **ALL buttons: `variant="outline"`** - no solid buttons
+- Edit buttons: `variant="outline" size="sm"` with icon + text
+- Icons use `mr-2` before text
+
+## Layout
+- No Card components - use `<Separator class="my-8" />` between sections
+- Full-width pages - no `max-w-*` constraints (except auth pages)
+- Left-aligned content - no `text-center`
+
+## Sheet/Drawer Editing
 - Click item → Opens Sheet from right
-- Sheet contains form
+- Sheet contains form with `py-6 px-1` padding
 - Save/Cancel in Sheet footer
-- NEVER use inline editing
-- NEVER navigate to separate edit page
-- NEVER use centered modals for forms (only for confirmations)
+- NEVER use inline editing or separate edit pages
 
-## Form Layout
-- Single column layout
-- Labels above inputs
-- Error messages below inputs
-- Submit button right-aligned
-
-## Lists/Tables
-- Use DataTable for >5 columns
-- Use Card list for ≤5 columns or mobile
+## Lists
 - Always show empty state
 - Always show loading skeleton
+- Use shared components: `NetCard`, `OperatorCard`
 
 ## Confirmations
 - Use AlertDialog for destructive actions
