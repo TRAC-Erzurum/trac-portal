@@ -17,6 +17,19 @@ services:
         condition: service_healthy
     networks:
       - trac-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 200M
+        reservations:
+          memory: 150M
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost/v2/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   api:
     container_name: trac-portal-api
@@ -29,7 +42,7 @@ services:
       - DOMAIN=${DOMAIN}
       - DB_HOST=db
       - DB_PORT=5432
-      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_USERNAME=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME:-trac_db}
       - DB_SSL=false
@@ -52,6 +65,13 @@ services:
         condition: service_healthy
     networks:
       - trac-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 200M
+        reservations:
+          memory: 150M
 
   db:
     container_name: trac-db
@@ -59,18 +79,25 @@ services:
     expose:
       - "5432"
     environment:
-      - POSTGRES_USER=${DB_USERNAME:-postgres}
+      - POSTGRES_USER=${DB_USER:-postgres}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME:-trac_db}
     volumes:
       - ./volumes/db:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}" ]
       interval: 5s
       timeout: 5s
       retries: 5
     networks:
       - trac-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 100M
+        reservations:
+          memory: 80M
 
   certbot:
     image: certbot/certbot
@@ -81,6 +108,7 @@ services:
     command: renew
     depends_on:
       - ui
+    restart: "no"
 
 networks:
   trac-network:
