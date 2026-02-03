@@ -52,10 +52,10 @@ elif [ "$MODE" = "release" ] && [ -z "$VERSION" ]; then
 fi
 
 echo "🔨 Building API image..."
-docker build -t temp-api-image ./backend
+docker build -t temp-api-image ./trac-portal-api
 
 echo "🔨 Building UI image..."
-docker build -t temp-ui-image ./frontend
+docker build -t temp-ui-image ./trac-portal-ui
 
 if [ "$MODE" = "dev" ]; then
   echo "🏷️ Tagging images with dev tags..."

@@ -1,0 +1,22 @@
+---
+alwaysApply: true
+---
+# Design System
+
+## Colors
+- Base: Zinc gray
+- Primary: TRAC Blue (#0c0563)
+- Use CSS variables, never hardcode
+
+## Typography
+- Font: Rajdhani
+- Section title: `text-sm font-medium text-muted-foreground`
+- Field label: `text-xs text-muted-foreground`
+- Field value: `font-medium`
+
+## Border Radius
+- Elements: `rounded-md` or `rounded-lg`
+- Badges: `rounded-full`
+
+## Shadows
+- Minimal - prefer border definition

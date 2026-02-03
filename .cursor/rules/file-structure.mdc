@@ -1,0 +1,39 @@
+---
+alwaysApply: true
+globs: trac-portal-ui/v2/**/*
+---
+# File Structure Rules
+
+## Source Structure (v2/src/)
+```
+v2/src/
+  composables/     # Vue reactive helpers (useX, getX)
+  lib/             # Pure utilities (formatters, ui-helpers, api)
+  components/
+    ui/            # shadcn-vue (auto-generated, don't edit)
+    shared/        # Reusable across features (NetCard, OperatorCard)
+    [feature]/     # Feature-specific (nets/, dashboard/, profile/)
+  pages/           # Route views
+  stores/          # Pinia stores
+  i18n/            # Internationalization
+```
+
+## When to Use What
+
+| Need | Location |
+|------|----------|
+| Shared UI component | `components/shared/` |
+| Feature UI component | `components/[feature]/` |
+| Vue reactive logic | `composables/` |
+| Pure utility | `lib/` |
+
+## Existing Utilities (check before creating new)
+```typescript
+import { getAvatarUrl } from '@/composables'
+import { formatDateTime, formatCallSign } from '@/lib/formatters'
+import { getRoleBadgeClass } from '@/lib/ui-helpers'
+import { NetCard, OperatorCard } from '@/components/shared'
+```
+
+## Package Manager
+- **Always use yarn**, never npm

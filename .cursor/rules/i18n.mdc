@@ -1,0 +1,21 @@
+---
+alwaysApply: true
+---
+# Internationalization
+
+## Rules
+- No hardcoded text - use `t()` for all user-visible text
+- TR and EN must stay in sync
+- Backend returns i18n keys, not raw text
+
+## Usage
+```vue
+const { t } = useI18n()
+{{ t('common.save') }}
+```
+
+## Error Handling
+```typescript
+import { translateError } from '@/i18n'
+toast.error(translateError(error.message))
+```

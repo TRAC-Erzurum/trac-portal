@@ -1,0 +1,16 @@
+---
+alwaysApply: true
+---
+# API Patterns
+
+## HTTP Client
+- Use `@/lib/api.ts` typed fetch wrapper
+- All responses typed with TypeScript interfaces
+
+## Authentication
+- JWT in httpOnly cookie
+- Auto-logout on 401
+
+## Error Handling
+- Backend returns i18n keys, not raw text
+- Frontend uses `translateError()` for display
