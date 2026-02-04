@@ -1,21 +1,9 @@
 ---
-alwaysApply: true
+alwaysApply: false
+globs: trac-portal-ui/**/*.ts, trac-portal-ui/**/*.vue, trac-portal-api/src/**/*.ts
 ---
-# Internationalization
+# i18n
 
-## Rules
-- No hardcoded text - use `t()` for all user-visible text
-- TR and EN must stay in sync
-- Backend returns i18n keys, not raw text
-
-## Usage
-```vue
-const { t } = useI18n()
-{{ t('common.save') }}
-```
-
-## Error Handling
-```typescript
-import { translateError } from '@/i18n'
-toast.error(translateError(error.message))
-```
+- No hardcoded text: `{{ t('key') }}` with `const { t } = useI18n()`
+- TR/EN must stay in sync
+- Errors: `toast.error(translateError(error.message))`

@@ -1,19 +1,11 @@
 ---
-alwaysApply: true
+alwaysApply: false
+globs: trac-portal-ui/**/*.vue
 ---
-# Accessibility Rules
+# Accessibility
 
-## Keyboard Navigation
-- All interactive elements focusable
-- Visible focus indicators
+- All interactive elements focusable with visible focus indicators
 - Escape closes modals/sheets
-
-## Screen Readers
-- Meaningful alt texts
-- ARIA labels on icon-only buttons
-- Announce dynamic content changes
-
-## Color Contrast
-- Minimum 4.5:1 for normal text
-- Minimum 3:1 for large text
+- ARIA labels on icon-only buttons, meaningful alt texts
+- Contrast: 4.5:1 normal text, 3:1 large text
 - Never rely on color alone

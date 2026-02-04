@@ -1,16 +1,9 @@
 ---
-alwaysApply: true
+alwaysApply: false
+globs: trac-portal-ui/**/*.ts, trac-portal-ui/**/*.vue, trac-portal-api/src/**/*.ts
 ---
 # API Patterns
 
-## HTTP Client
 - Use `@/lib/api.ts` typed fetch wrapper
-- All responses typed with TypeScript interfaces
-
-## Authentication
-- JWT in httpOnly cookie
-- Auto-logout on 401
-
-## Error Handling
-- Backend returns i18n keys, not raw text
-- Frontend uses `translateError()` for display
+- JWT in httpOnly cookie, auto-logout on 401
+- Backend returns i18n keys → frontend uses `translateError()`

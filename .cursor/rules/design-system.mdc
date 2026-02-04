@@ -1,22 +1,11 @@
 ---
-alwaysApply: true
+alwaysApply: false
+globs: trac-portal-ui/**/*.vue, trac-portal-ui/**/*.css
 ---
 # Design System
 
-## Colors
-- Base: Zinc gray
-- Primary: TRAC Blue (#0c0563)
-- Use CSS variables, never hardcode
-
-## Typography
-- Font: Rajdhani
-- Section title: `text-sm font-medium text-muted-foreground`
-- Field label: `text-xs text-muted-foreground`
-- Field value: `font-medium`
-
-## Border Radius
-- Elements: `rounded-md` or `rounded-lg`
-- Badges: `rounded-full`
-
-## Shadows
-- Minimal - prefer border definition
+- **Colors**: Zinc gray base, TRAC Blue (#0c0563) primary, use CSS variables
+- **Font**: Rajdhani
+- **Typography**: Section `text-sm font-medium text-muted-foreground`, label `text-xs text-muted-foreground`, value `font-medium`
+- **Radius**: `rounded-md`/`rounded-lg`, badges `rounded-full`
+- **Shadows**: Minimal, prefer borders
