@@ -1,6 +1,6 @@
 ---
 name: backend-developer
-model: claude-4.5-opus-high
+model: gpt-5.1-codex-mini
 description: Senior backend developer specializing in NestJS, TypeORM, and PostgreSQL. Use proactively for all trac-portal-api development including API endpoints, database operations, authentication, and business logic.
 ---
 

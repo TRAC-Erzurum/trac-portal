@@ -4,40 +4,40 @@ overview: Kullanıcı-şube ilişkisi ve şube bazlı roller - Kayıt, üyelik t
 todos:
   - id: migration-memberships
     content: "Migration: CreateUserBranchMemberships (user_branch_memberships tablosu)"
-    status: pending
+    status: completed
   - id: migration-globalrole
     content: "Migration: UpdateUserGlobalRole (users tablosuna globalRole ekle)"
-    status: pending
+    status: completed
   - id: migration-superadmin-hq
     content: "Migration: SeedSuperAdminHqMembership (SUPER_ADMIN'i HQ'ya ekle)"
-    status: pending
+    status: completed
   - id: membership-entity
     content: UserBranchMembership entity ve migration
-    status: pending
+    status: completed
   - id: user-globalrole
     content: "User entity: globalRole field"
-    status: pending
+    status: completed
   - id: registration-update
     content: "Kayıt akışı: Çoklu şube seçimi"
-    status: pending
+    status: completed
   - id: membership-service
     content: "MembershipService: request, approve, reject, remove"
-    status: pending
+    status: completed
   - id: pending-banner
     content: GUEST için onay bekliyor banner
-    status: pending
+    status: completed
   - id: account-memberships
     content: "Account sayfası: Üyeliklerim bölümü"
-    status: pending
+    status: completed
   - id: admin-requests
     content: "Admin: Talep yönetimi sayfası"
-    status: pending
+    status: completed
   - id: member-list
     content: "Şube detay: Üye listesi ve yönetimi (Epic 2: HQ/SUPER_ADMIN için çıkar butonu gizle)"
-    status: pending
+    status: completed
   - id: role-management
     content: Rol değiştirme ve koruma kuralları
-    status: pending
+    status: completed
 isProject: false
 ---
 

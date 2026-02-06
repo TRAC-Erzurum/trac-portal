@@ -2,7 +2,7 @@
 alwaysApply: true
 globs: trac-portal-ui/v2/**/*
 ---
-# File Structure Rules
+# File Structure Rules (Frontend)
 
 ## Source Structure (v2/src/)
 ```
@@ -34,6 +34,15 @@ import { formatDateTime, formatCallSign } from '@/lib/formatters'
 import { getRoleBadgeClass } from '@/lib/ui-helpers'
 import { NetCard, OperatorCard } from '@/components/shared'
 ```
+
+## Import Order (script top only)
+- All imports at the very top of the script block; no code before imports.
+- Order: Vue (vue, vue-router, vue-i18n) → vue-sonner → lucide-vue-next → @/components (alphabetically by path) → @/stores, @/composables → @/i18n → @/lib (value and `type` from same module together) → @/data, @/constants.
+- Within same group: alphabetize by symbol name (e.g. lucide icons A–Z).
+
+## Roles
+- **Global roles** (user-level): GUEST, SUPER_ADMIN only. Use for JWT, auth checks, profile display.
+- **Branch roles** (non-global): ADMIN, MEMBER, VOLUNTEER only. Use for membership approve, role change, member list. Never offer or display super_admin/guest in branch-role selects.
 
 ## Package Manager
 - **Always use yarn**, never npm

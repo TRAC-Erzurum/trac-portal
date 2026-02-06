@@ -1,0 +1,471 @@
+# Page Layout Consistency Rules
+
+## Overview
+
+All pages must follow one of three layout patterns:
+1. **List Layout** - For listing pages (operators, nets, branches, infrastructure)
+2. **Detail Layout** - For detail/view pages (profile, account, net detail, branch detail)
+3. **Homepage Layout** - Special case for dashboard
+
+---
+
+## 1. List Layout Pattern
+
+### Complete Structure
+```vue
+<template>
+  <AppLayout :title="t('nav.resourceName').toUpperCase()">
+    <div class="space-y-4">
+      <!-- 1. Filter Bar -->
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Filters Group (max 50% screen on desktop) -->
+        <div class="w-full lg:max-w-[50%] flex flex-wrap items-center gap-2">
+          <!-- Search -->
+          <!-- Filters -->
+        </div>
+        <!-- Action Button (desktop only) -->
+      </div>
+
+      <!-- 2. Item Count -->
+      <p v-if="!isLoading" class="text-sm text-muted-foreground">
+        {{ items.length }}/{{ total }} {{ t('resource.name') }}
+      </p>
+
+      <!-- 3. Separator -->
+      <Separator />
+
+      <!-- 4. Content Grid -->
+      <!-- Loading, empty, or items -->
+      
+      <!-- 5. Load More Button -->
+    </div>
+  </AppLayout>
+</template>
+```
+
+### 1. Header - UPPERCASE Title
+```vue
+<script setup lang="ts">
+const { t, locale } = useI18n()
+// ...
+</script>
+
+<template>
+  <AppLayout :title="t('nav.resourceName').toLocaleUpperCase(locale)">
+</template>
+```
+- Title **MUST** be uppercase using `.toLocaleUpperCase(locale)` for proper locale-specific character conversion
+- **IMPORTANT**: Use `locale` from `useI18n()`, not hardcoded 'tr-TR'
+- Examples:
+  - Turkish (locale='tr'): `t('nav.nets').toLocaleUpperCase(locale)` → "ÇEVRİMLER" (with İ not I)
+  - English (locale='en'): `t('nav.nets').toLocaleUpperCase(locale)` → "NETS"
+
+### 2. Breadcrumb - "Ana Sayfa" not "Dashboard"
+**In Breadcrumb.vue:**
+```typescript
+items.push({ label: t('nav.home'), to: '/dashboard' })
+```
+
+**i18n Keys:**
+```json
+// tr.json
+"nav": {
+  "home": "Ana Sayfa"
+}
+
+// en.json
+"nav": {
+  "home": "Home"
+}
+```
+
+### 3. Filter Bar - Two-Row Layout
+
+```vue
+<div class="flex flex-wrap items-center gap-2">
+  <!-- Row 1: Search (50% width on desktop) -->
+  <div class="w-full lg:w-[calc(50%-0.25rem)]">
+    <div class="relative">
+      <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <Input
+        v-model="search"
+        :placeholder="t('resource.searchPlaceholder')"
+        class="pl-9"
+      />
+    </div>
+  </div>
+
+  <!-- Action Button: Desktop only, right-aligned -->
+  <Button 
+    v-if="canCreate" 
+    variant="outline" 
+    @click="showCreateSheet = true" 
+    class="hidden lg:flex ml-auto gap-2"
+  >
+    <Plus class="h-4 w-4" />
+    {{ t('resource.create') }}
+  </Button>
+
+  <!-- Row 2: Filters (50% width on desktop, equal distribution) -->
+  <div class="w-full lg:w-[calc(50%-0.25rem)] flex flex-wrap items-center gap-2">
+    <Select v-model="statusFilter">
+      <SelectTrigger class="w-full lg:flex-1">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <!-- options -->
+      </SelectContent>
+    </Select>
+
+    <Select v-model="dateFilter">
+      <SelectTrigger class="w-full lg:flex-1">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <!-- options -->
+      </SelectContent>
+    </Select>
+
+    <Select v-model="branchFilter">
+      <SelectTrigger class="w-full lg:flex-1">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <!-- options -->
+      </SelectContent>
+    </Select>
+  </div>
+</div>
+```
+
+**Layout Rules:**
+- **Mobile**: 
+  - All inputs full width (`w-full`)
+  - Search first row, filters stack below vertically
+- **Desktop (lg+)**: 
+  - Search: First row, exactly 50% width (`lg:w-[calc(50%-0.25rem)]`)
+  - Filters: Second row, 50% width total, divided equally (`lg:flex-1`)
+  - Action button on first row, right-aligned with `ml-auto`
+  - Each select grows equally using `lg:flex-1`
+- **Action Button**: 
+  - Hidden on mobile (`hidden lg:flex`)
+  - Appears on desktop, right side of first row
+
+### 4. Item Count - "X/Y resource" Format
+
+```vue
+<p v-if="!isLoading" class="text-sm text-muted-foreground">
+  {{ items.length }}/{{ total }} {{ t('resource.name') }}
+</p>
+```
+
+**Format:** `current shown / total count resource name`
+
+**Examples:**
+- `{{ operators.length }}/{{ total }} {{ t('operators.name') }}` → "12/6880 operatör"
+- `{{ nets.length }}/{{ total }} {{ t('nets.name') }}` → "8/450 çevrim"
+
+**i18n Keys:**
+```json
+// tr.json
+"operators": { "name": "operatör" },
+"nets": { "name": "çevrim" },
+"branches": { "name": "şube" },
+"infrastructure": { "name": "altyapı" }
+
+// en.json (use plural)
+"operators": { "name": "operators" },
+"nets": { "name": "nets" },
+"branches": { "name": "branches" },
+"infrastructure": { "name": "infrastructure" }
+```
+
+### 5. Separator
+```vue
+<Separator />
+```
+- Always placed after item count
+- Before content grid
+
+### 6. Content Grid - 3 Columns on Desktop
+
+```vue
+<!-- Loading State -->
+<div v-if="isLoading" class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+  <ResourceCardSkeleton v-for="i in 6" :key="i" />
+</div>
+
+<!-- Empty State -->
+<div v-else-if="items.length === 0" class="py-8 text-center">
+  <p class="text-muted-foreground">{{ t('resource.noResults') }}</p>
+</div>
+
+<!-- Items Grid -->
+<div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+  <ResourceCard
+    v-for="item in items"
+    :key="item.id"
+    v-bind="itemProps"
+  />
+</div>
+```
+
+**Grid Rules:**
+- Mobile: 1 column (`grid-cols-1`)
+- Desktop: 3 columns (`lg:grid-cols-3`)
+- Gap: `gap-3` (12px between items)
+- **NEVER** use `xl:grid-cols-3` - always use `lg:grid-cols-3`
+
+### 7. Load More Button - Mobile Bottom Padding
+
+```vue
+<div v-if="hasMore && !isLoading" class="pt-4 pb-16 lg:pb-0">
+  <Button
+    variant="outline"
+    class="w-full lg:w-auto lg:px-8"
+    :disabled="isLoadingMore"
+    @click="loadMore"
+  >
+    {{ isLoadingMore ? t('common.loading') : t('resource.loadMore') }}
+  </Button>
+</div>
+```
+
+**Button Rules:**
+- Top padding: `pt-4`
+- Bottom padding: `pb-16` on mobile (for bottom nav bar), `lg:pb-0` on desktop
+- Mobile: Full width (`w-full`)
+- Desktop: Auto width with padding (`lg:w-auto lg:px-8`)
+- Show only when: `hasMore && !isLoading`
+
+### Mobile FAB (Floating Action Button)
+```vue
+<!-- Mobile-only FAB for create action -->
+<Button
+  v-if="canCreate"
+  variant="default"
+  size="lg"
+  class="lg:hidden fixed bottom-20 right-4 w-14 h-14 rounded-full shadow-lg z-10"
+  @click="showCreateSheet = true"
+>
+  <Plus class="h-6 w-6" />
+</Button>
+```
+
+---
+
+## 2. Detail Layout Pattern
+
+### Structure
+```vue
+<template>
+  <AppLayout>
+    <template #title>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        @click="$router.back()" 
+        class="mr-2"
+      >
+        <ChevronLeft class="h-4 w-4" />
+      </Button>
+      <h1 class="text-2xl lg:text-3xl font-bold truncate">{{ pageTitle }}</h1>
+    </template>
+
+    <!-- Content sections separated by Separator -->
+    <div class="space-y-8">
+      <!-- Section 1 -->
+      <div>
+        <h2 class="text-sm font-medium text-muted-foreground mb-4">{{ sectionTitle }}</h2>
+        <!-- Content -->
+      </div>
+
+      <Separator />
+
+      <!-- Section 2 -->
+      <div>
+        <h2 class="text-sm font-medium text-muted-foreground mb-4">{{ sectionTitle }}</h2>
+        <!-- Content -->
+      </div>
+    </div>
+  </AppLayout>
+</template>
+```
+
+### Detail Page Rules
+- **No** `:title` prop on AppLayout, use `<template #title>` slot instead
+- Back button: `variant="ghost" size="sm"` with `ChevronLeft` icon
+- Section title: `text-sm font-medium text-muted-foreground mb-4`
+- Section spacing: `space-y-8`
+- Use `<Separator />` between major sections
+- Field labels: `text-xs text-muted-foreground`
+- Field values: `font-medium`
+
+---
+
+## 3. Homepage Layout
+
+### Rules
+- **Reuse components** from list pages when possible
+- Use `NetCard` for net lists
+- Use `OperatorCard` for operator lists
+- Keep unique layout structure (cards, stats, quick actions)
+- No specific template - allow flexibility for dashboard UX
+
+---
+
+## Spacing Standards
+
+### Page Container
+- Padding: `p-6 lg:p-8` (set in AppLayout)
+- Content wrapper: `space-y-4` (list) or `space-y-8` (detail)
+
+### Grid Gaps
+- Cards: `gap-3`
+- Form fields: `gap-4`
+- Sections: `space-y-8`
+
+### Padding
+- Card: `p-4`
+- Button: Default, or `lg:px-8` for wide buttons
+- Mobile bottom: `pb-16` (for bottom nav bar)
+
+---
+
+## Import Order (Always)
+
+```typescript
+// Vue core
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'  // Always destructure with locale: const { t, locale } = useI18n()
+
+// External libraries
+import { toast } from 'vue-sonner'
+
+// Lucide icons (alphabetically)
+import { ChevronLeft, Plus, Search } from 'lucide-vue-next'
+
+// UI components (alphabetically by path)
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+
+// Layout components
+import AppLayout from '@/components/layout/AppLayout.vue'
+
+// Shared components
+import { OperatorCard, OperatorCardSkeleton, NetCard } from '@/components/shared'
+
+// Stores
+import { useAuthStore } from '@/stores/auth'
+
+// Composables
+import { getAvatarUrl } from '@/composables'
+
+// i18n
+import { translateError } from '@/i18n'
+
+// Lib (value and type together)
+import { api, type ApiError } from '@/lib/api'
+import { formatDateTime } from '@/lib/formatters'
+import { getRoleBadgeClass } from '@/lib/ui-helpers'
+```
+
+---
+
+## Examples
+
+### Example: List Page (OperatorsPage.vue)
+```vue
+<script setup lang="ts">
+import { ref, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { Search } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import AppLayout from '@/components/layout/AppLayout.vue'
+import { OperatorCard, OperatorCardSkeleton } from '@/components/shared'
+import { api } from '@/lib/api'
+
+const { t, locale } = useI18n()
+const operators = ref([])
+const total = ref(0)
+const isLoading = ref(true)
+const search = ref('')
+const membershipFilter = ref('all')
+// ... more logic
+</script>
+
+<template>
+  <AppLayout :title="t('nav.operators').toLocaleUpperCase(locale)">
+    <div class="space-y-4">
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="w-full lg:max-w-[50%] flex flex-wrap items-center gap-2">
+          <div class="relative w-full lg:flex-1 lg:min-w-[280px]">
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input v-model="search" :placeholder="t('operators.searchPlaceholder')" class="pl-9" />
+          </div>
+          <Select v-model="membershipFilter">
+            <SelectTrigger class="w-full lg:w-auto lg:min-w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{{ t('operators.membershipAll') }}</SelectItem>
+              <SelectItem value="registered">{{ t('operators.membershipRegistered') }}</SelectItem>
+              <SelectItem value="unregistered">{{ t('operators.membershipUnregistered') }}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <p v-if="!isLoading" class="text-sm text-muted-foreground">
+        {{ operators.length }}/{{ total }} {{ t('operators.name') }}
+      </p>
+
+      <Separator />
+
+      <div v-if="isLoading" class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <OperatorCardSkeleton v-for="i in 6" :key="i" />
+      </div>
+
+      <div v-else-if="operators.length === 0" class="py-8 text-center">
+        <p class="text-muted-foreground">{{ t('operators.noResults') }}</p>
+      </div>
+
+      <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <OperatorCard v-for="op in operators" :key="op.id" v-bind="op" />
+      </div>
+
+      <div v-if="hasMore && !isLoading" class="pt-4 pb-16 lg:pb-0">
+        <Button variant="outline" class="w-full lg:w-auto lg:px-8" :disabled="isLoadingMore" @click="loadMore">
+          {{ isLoadingMore ? t('common.loading') : t('operators.loadMore') }}
+        </Button>
+      </div>
+    </div>
+  </AppLayout>
+</template>
+```
+
+---
+
+## Checklist
+
+When creating/updating a list page:
+- [ ] Title is UPPERCASE using `.toLocaleUpperCase(locale)` (not hardcoded locale)
+- [ ] Breadcrumb uses `t('nav.home')` for homepage link
+- [ ] Filter bar has `w-full lg:max-w-[50%]` wrapper
+- [ ] Item count shows `{{ items.length }}/{{ total }} {{ t('resource.name') }}`
+- [ ] Grid uses `lg:grid-cols-3` (not `xl:grid-cols-3`)
+- [ ] Load More has `pb-16 lg:pb-0`
+- [ ] All `space-y-4` wrapper
+- [ ] Imports follow correct order
+
+When creating/updating a detail page:
+- [ ] Uses `<template #title>` slot with back button
+- [ ] Section titles are `text-sm font-medium text-muted-foreground`
+- [ ] Sections separated by `<Separator />`
+- [ ] Uses `space-y-8` wrapper

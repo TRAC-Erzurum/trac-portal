@@ -1,0 +1,242 @@
+---
+alwaysApply: true
+globs: trac-portal-api/**/*
+---
+# Backend Structure Rules (NestJS + TypeORM)
+
+> **CRITICAL**: For database migrations, ALWAYS check `.cursor/rules/backend-migrations.mdc`
+
+## Project Structure (trac-portal-api/src/)
+```
+src/
+  auth/              # Authentication & authorization
+  user/              # User management
+  operator/          # Amateur radio operators
+  branch/            # Branches & memberships
+  net/               # Nets (radio sessions)
+  communication-channel/  # Communication infrastructure
+  activity/          # Activity logs
+  migrations/        # TypeORM migrations ⚠️ USE CURRENT TIMESTAMP
+  shared/            # Shared utilities & types
+```
+
+## Module Organization
+
+Each feature module should follow this structure:
+```
+[feature]/
+  controllers/       # REST API endpoints
+  services/          # Business logic
+  entities/          # TypeORM entities
+  dto/               # Data Transfer Objects
+  decorators/        # Custom decorators
+  enums/             # Enumerations
+  guards/            # Route guards
+  [feature].module.ts
+```
+
+## Migration Rules (CRITICAL)
+
+### ⚠️ ALWAYS Use Current Timestamp
+When creating migrations, generate current timestamp:
+```bash
+date +%s%3N  # Linux/Mac
+node -e "console.log(Date.now())"  # Any platform
+```
+
+### Migration File Format
+```
+migrations/[CURRENT_TIMESTAMP]-[DescriptiveName].ts
+
+Examples:
+✅ 1790000000000-RenameInfrastructureToCommunicationChannel.ts
+❌ 1234567890123-AddNewField.ts  (old timestamp)
+```
+
+See `.cursor/rules/backend-migrations.mdc` for complete migration guidelines.
+
+## Naming Conventions
+
+### Files & Folders
+- Use kebab-case: `user-branch-membership.entity.ts`
+- Controllers: `[feature].controller.ts`
+- Services: `[feature].service.ts`
+- Entities: `[name].entity.ts`
+- DTOs: `create-[name].dto.ts`, `update-[name].dto.ts`
+
+### Classes & Interfaces
+- Use PascalCase: `UserBranchMembership`, `CreateNetDto`
+- Controllers: `[Feature]Controller`
+- Services: `[Feature]Service`
+- Entities: `[Name]` (no suffix)
+- DTOs: `Create[Name]Dto`, `Update[Name]Dto`
+
+### Database
+- Tables: snake_case plural: `user_branch_memberships`
+- Columns: camelCase in entity, snake_case in DB (TypeORM converts)
+- Enum types: snake_case with _enum suffix: `communication_channel_type_enum`
+
+## TypeORM Entity Guidelines
+
+```typescript
+@Entity('table_name')
+export class EntityName extends BaseEntity {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column()
+  name: string;
+
+  @ManyToOne(() => RelatedEntity, related => related.entities)
+  @JoinColumn({ name: 'relatedId' })
+  related: RelatedEntity;
+
+  @Column({ type: 'uuid' })
+  relatedId: string;
+}
+```
+
+## DTO Guidelines
+
+```typescript
+export class CreateEntityDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsUUID()
+  @IsOptional()
+  relatedId?: string;
+}
+
+export class UpdateEntityDto extends PartialType(CreateEntityDto) {}
+```
+
+## Service Pattern
+
+```typescript
+@Injectable()
+export class FeatureService {
+  constructor(
+    @InjectRepository(Entity)
+    private readonly repository: Repository<Entity>,
+    private readonly relatedService: RelatedService,
+  ) {}
+
+  async findAll(): Promise<Entity[]> {
+    return this.repository.find({
+      relations: ['related'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findOne(id: string): Promise<Entity> {
+    const entity = await this.repository.findOne({ 
+      where: { id },
+      relations: ['related'],
+    });
+    if (!entity) {
+      throw new NotFoundException('error.notFound');
+    }
+    return entity;
+  }
+}
+```
+
+## Controller Pattern
+
+```typescript
+@Controller('feature')
+export class FeatureController {
+  constructor(private readonly service: FeatureService) {}
+
+  @Get()
+  @Roles(Role.MEMBER)
+  findAll() {
+    return this.service.findAll();
+  }
+
+  @Post()
+  @Roles(Role.ADMIN)
+  create(@Body() dto: CreateFeatureDto, @Req() req: RequestWithUser) {
+    return this.service.create(dto, req.user.email);
+  }
+}
+```
+
+## Error Handling
+
+```typescript
+// Use standard NestJS exceptions
+throw new NotFoundException('error.notFound');
+throw new BadRequestException('error.invalidData');
+throw new ForbiddenException('error.noPermission');
+throw new ConflictException('error.alreadyExists');
+
+// Return i18n keys, not raw text
+// Frontend will translate these keys
+```
+
+## Query Builder Pattern
+
+```typescript
+const entities = await this.repository
+  .createQueryBuilder('entity')
+  .leftJoinAndSelect('entity.related', 'related')
+  .where('entity.isActive = :isActive', { isActive: true })
+  .andWhere('LOWER(entity.name) LIKE :search', { 
+    search: `%${search.toLowerCase()}%` 
+  })
+  .orderBy('entity.createdAt', 'DESC')
+  .getMany();
+```
+
+## Important Patterns
+
+### Audit Fields
+All entities should track who created/updated:
+```typescript
+@Column({ type: 'varchar' })
+createdBy: string;  // email
+
+@Column({ type: 'simple-array', nullable: true })
+updatedBy: string[];  // array of emails
+```
+
+### Soft Delete (if needed)
+```typescript
+@Column({ type: 'boolean', default: true })
+isActive: boolean;
+```
+
+### Timestamps
+```typescript
+@CreateDateColumn()
+createdAt: Date;
+
+@UpdateDateColumn()
+updatedAt: Date;
+```
+
+## Package Manager
+- **Always use yarn**, never npm
+
+## Testing Migrations
+
+Before committing any migration:
+1. ✅ Run: `yarn migration:run`
+2. ✅ Verify database changes
+3. ✅ Test: `yarn migration:revert`
+4. ✅ Re-run: `yarn migration:run`
+5. ✅ Test application
+
+## Checklist for New Features
+
+- [ ] Entity uses current naming conventions
+- [ ] DTOs have proper validation decorators
+- [ ] Service implements error handling
+- [ ] Controller uses proper decorators (@Roles, etc.)
+- [ ] Migration uses CURRENT timestamp
+- [ ] Migration has both up and down methods
+- [ ] All tests pass
+- [ ] Code follows existing patterns

@@ -4,31 +4,31 @@ overview: Çevrim-şube-altyapı ilişkisi - Çevrim oluştururken şube/altyap�
 todos:
   - id: migration-net-branch
     content: "Migration: AddBranchFieldsToNets (branchId, branchCallSignId, isActive + mevcut netleri HQ'ya ata)"
-    status: pending
+    status: completed
   - id: migration-net-infrastructure
     content: "Migration: CreateNetInfrastructure (net_infrastructure tablosu)"
-    status: pending
+    status: completed
   - id: net-branch-fields
     content: "Net entity: branchId, callSignId alanları"
-    status: pending
+    status: completed
   - id: net-infrastructure-entity
     content: NetInfrastructure entity ve migration
-    status: pending
+    status: completed
   - id: net-create-branch
     content: "Net oluşturma: Şube/altyapı seçimi"
-    status: pending
+    status: completed
   - id: manage-net-guard
     content: "ManageNetGuard: Branch membership check"
-    status: pending
+    status: completed
   - id: operator-selection
     content: "Operatör seçimi: Şube üyeleri filtresi"
-    status: pending
+    status: completed
   - id: branch-nets-list
     content: "Şube detay: Çevrim listesi"
-    status: pending
+    status: completed
   - id: infrastructure-delete-check
     content: "Altyapı silme/pasif kontrolü: Aktif çevrimde kullanılan altyapı silinemez"
-    status: pending
+    status: completed
 isProject: false
 ---
 

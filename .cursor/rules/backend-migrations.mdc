@@ -1,0 +1,208 @@
+# Database Migration Rules
+
+## Migration Timestamp Requirements
+
+**CRITICAL**: When creating new TypeORM migrations, ALWAYS use the current timestamp.
+
+### How to Generate Current Timestamp
+
+```bash
+# Get current timestamp in milliseconds
+date +%s%3N
+
+# Or use Node.js
+node -e "console.log(Date.now())"
+```
+
+### Migration Naming Convention
+
+```
+[CURRENT_TIMESTAMP]-[DescriptiveName].ts
+
+Examples:
+✅ 1738828803000-AddCityToBranchAndDistrictToInfra.ts
+✅ 1770380567674-AssignDefaultSimplexToExistingNets.ts
+✅ 1790000000000-RenameInfrastructureToCommunicationChannel.ts
+
+❌ 1234567890123-AddNewField.ts  (old/hardcoded timestamp)
+❌ AddNewField.ts  (no timestamp)
+```
+
+### Migration File Template
+
+```typescript
+import { MigrationInterface, QueryRunner } from 'typeorm';
+
+export class DescriptiveName[CURRENT_TIMESTAMP] implements MigrationInterface {
+  name = 'DescriptiveName[CURRENT_TIMESTAMP]';
+
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    // Forward migration
+    await queryRunner.query(`
+      -- Your SQL here
+    `);
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    // Rollback migration
+    await queryRunner.query(`
+      -- Reverse SQL here
+    `);
+  }
+}
+```
+
+## Why Current Timestamp Matters
+
+1. **Sequential Execution**: TypeORM runs migrations in chronological order based on timestamp
+2. **Conflict Prevention**: Using current timestamp prevents conflicts in collaborative development
+3. **Deployment Order**: Ensures migrations run in the correct order across environments
+4. **Version Control**: Git merge conflicts are minimized
+
+## Migration Best Practices
+
+### 1. Always Include Rollback (down method)
+```typescript
+public async down(queryRunner: QueryRunner): Promise<void> {
+  // NEVER leave empty - always implement rollback
+  await queryRunner.query(`
+    DROP TABLE IF EXISTS "new_table";
+  `);
+}
+```
+
+### 2. Use Transactions
+```typescript
+public async up(queryRunner: QueryRunner): Promise<void> {
+  // Multiple operations in single transaction
+  await queryRunner.query(`ALTER TABLE "users" ADD "newColumn" VARCHAR`);
+  await queryRunner.query(`UPDATE "users" SET "newColumn" = 'default'`);
+  // TypeORM handles transaction automatically
+}
+```
+
+### 3. Handle Existing Data
+```typescript
+// Before adding NOT NULL constraint, set defaults
+await queryRunner.query(`UPDATE "table" SET "column" = 'default' WHERE "column" IS NULL`);
+await queryRunner.query(`ALTER TABLE "table" ALTER COLUMN "column" SET NOT NULL`);
+```
+
+### 4. Safe Index Creation
+```typescript
+// Use IF NOT EXISTS when creating indexes
+await queryRunner.query(`
+  CREATE INDEX IF NOT EXISTS "IDX_table_column" 
+  ON "table" ("column")
+`);
+```
+
+### 5. Safe Column/Table Drops
+```typescript
+// Use IF EXISTS when dropping
+await queryRunner.query(`DROP INDEX IF EXISTS "IDX_old_index"`);
+await queryRunner.query(`ALTER TABLE "table" DROP COLUMN IF EXISTS "old_column"`);
+```
+
+## Common Migration Patterns
+
+### Add Column with Default
+```typescript
+await queryRunner.query(`
+  ALTER TABLE "users" 
+  ADD COLUMN "status" VARCHAR DEFAULT 'active'
+`);
+```
+
+### Rename Column
+```typescript
+await queryRunner.query(`
+  ALTER TABLE "users" 
+  RENAME COLUMN "oldName" TO "newName"
+`);
+```
+
+### Rename Table
+```typescript
+await queryRunner.query(`
+  ALTER TABLE "old_table_name" 
+  RENAME TO "new_table_name"
+`);
+```
+
+### Add Foreign Key
+```typescript
+await queryRunner.query(`
+  ALTER TABLE "child_table" 
+  ADD CONSTRAINT "FK_child_parent" 
+  FOREIGN KEY ("parentId") 
+  REFERENCES "parent_table"("id") 
+  ON DELETE CASCADE
+`);
+```
+
+### Create Enum Type
+```typescript
+await queryRunner.query(`
+  CREATE TYPE "user_role_enum" AS ENUM ('admin', 'user', 'guest')
+`);
+await queryRunner.query(`
+  ALTER TABLE "users" 
+  ADD COLUMN "role" "user_role_enum" DEFAULT 'guest'
+`);
+```
+
+### Rename Enum Type
+```typescript
+await queryRunner.query(`
+  ALTER TYPE "old_enum_name" 
+  RENAME TO "new_enum_name"
+`);
+```
+
+## Testing Migrations
+
+### Before Committing
+1. Run migration: `yarn migration:run`
+2. Verify changes in database
+3. Test rollback: `yarn migration:revert`
+4. Re-run migration: `yarn migration:run`
+5. Test application functionality
+
+### Migration Scripts
+```json
+{
+  "scripts": {
+    "migration:generate": "typeorm migration:generate",
+    "migration:create": "typeorm migration:create",
+    "migration:run": "typeorm migration:run",
+    "migration:revert": "typeorm migration:revert",
+    "migration:show": "typeorm migration:show"
+  }
+}
+```
+
+## IMPORTANT REMINDERS
+
+- ✅ ALWAYS use current timestamp for new migrations
+- ✅ ALWAYS implement both `up` and `down` methods
+- ✅ ALWAYS test rollback before committing
+- ✅ ALWAYS use `IF EXISTS` / `IF NOT EXISTS` for safety
+- ✅ ALWAYS handle existing data when adding constraints
+- ❌ NEVER use hardcoded/old timestamps
+- ❌ NEVER leave `down` method empty
+- ❌ NEVER commit untested migrations
+- ❌ NEVER modify existing migrations after they're deployed
+
+## Checklist for New Migration
+
+- [ ] File uses current timestamp (not hardcoded)
+- [ ] Class name matches filename
+- [ ] `up` method implements forward changes
+- [ ] `down` method implements rollback
+- [ ] Existing data is handled properly
+- [ ] Uses safe SQL (IF EXISTS/IF NOT EXISTS)
+- [ ] Tested `migration:run`
+- [ ] Tested `migration:revert`
+- [ ] Application works with migration
+- [ ] Application works after rollback

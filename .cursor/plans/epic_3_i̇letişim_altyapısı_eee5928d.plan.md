@@ -25,7 +25,7 @@ todos:
     status: completed
   - id: global-search
     content: "US-3.2b: Global infrastructure search - /infrastructure sayfası ve GET /infrastructure endpoint"
-    status: pending
+    status: completed
 isProject: false
 ---
 

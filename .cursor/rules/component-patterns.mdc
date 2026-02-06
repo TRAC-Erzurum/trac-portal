@@ -23,6 +23,36 @@ alwaysApply: true
 - Always show empty state
 - Always show loading skeleton
 - Use shared components: `NetCard`, `OperatorCard`
+- Grid: `grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3`
+- Empty state: `py-8 text-center` with muted text
+
+## Filter Bars
+- Search input: `w-full sm:flex-1 sm:max-w-xs` with `pl-9` for icon
+- Select filters: `flex-1 sm:flex-none sm:w-[WIDTH]` (120px-180px)
+- Container: `flex flex-wrap items-center gap-2`
+- Action buttons: `hidden lg:flex ml-auto gap-2` (hidden on mobile)
+
+## Pagination
+- Always use "Load More" pattern, never numbered pagination
+- Button: `w-full lg:w-auto lg:px-8`
+- Container: `pt-4 pb-16 lg:pb-0` (extra bottom padding for mobile FAB)
+- Show only when `hasMore && !isLoading`
+
+## Mobile FAB (Floating Action Button)
+- Position: `fixed bottom-20 right-4`
+- Size: `h-14 w-14 rounded-full`
+- Style: `shadow-lg z-40 bg-background`
+- Visibility: `lg:hidden` (only on mobile)
+- Only for create actions
+
+## Section Headers
+- Style: `text-sm font-medium text-muted-foreground flex items-center gap-2`
+- Icon: `h-4 w-4`
+- Margin: `mb-4` for content below
+
+## Section Separators
+- Always: `<Separator class="my-8" />` between major sections
+- Never use Card components as separators
 
 ## Confirmations
 - Use AlertDialog for destructive actions
