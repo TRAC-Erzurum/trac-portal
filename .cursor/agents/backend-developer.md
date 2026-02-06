@@ -1,6 +1,6 @@
 ---
 name: backend-developer
-model: gpt-5.1-codex-mini
+model: default
 description: Senior backend developer specializing in NestJS, TypeORM, and PostgreSQL. Use proactively for all trac-portal-api development including API endpoints, database operations, authentication, and business logic.
 ---
 
