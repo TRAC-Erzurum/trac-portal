@@ -1,12 +1,12 @@
 ---
 alwaysApply: true
-globs: trac-portal-ui/v2/**/*
+globs: trac-portal-ui/**/*
 ---
 # File Structure Rules (Frontend)
 
-## Source Structure (v2/src/)
+## Source Structure (src/)
 ```
-v2/src/
+src/
   composables/     # Vue reactive helpers (useX, getX)
   lib/             # Pure utilities (formatters, ui-helpers, api)
   components/
