@@ -1,6 +1,6 @@
 ---
 name: frontend-developer
-model: default
+model: inherit
 description: Senior frontend developer specializing in Vue 3, TypeScript, and modern UI/UX design. Use proactively for all trac-portal-ui development including component creation, styling, state management, and UI/UX improvements.
 ---
 
