@@ -3,7 +3,7 @@ name: trac-portal
 services:
   ui:
     container_name: trac-portal-ui
-    image: ghcr.io/trac-erzurum/trac-portal-ui:${TAG:-latest}
+    image: ghcr.io/trac-erzurum/trac-portal-ui:${UI_TAG:-${TAG:-latest}}
     ports:
       - "80:80"
       - "443:443"
@@ -33,7 +33,7 @@ services:
 
   api:
     container_name: trac-portal-api
-    image: ghcr.io/trac-erzurum/trac-portal-api:${TAG:-latest}
+    image: ghcr.io/trac-erzurum/trac-portal-api:${API_TAG:-${TAG:-latest}}
     expose:
       - "8000"
     environment:

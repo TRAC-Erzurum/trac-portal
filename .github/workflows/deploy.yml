@@ -1,0 +1,144 @@
+name: Deploy to server
+
+on:
+  workflow_dispatch:
+    inputs:
+      ui_version:
+        description: 'UI image tag (default latest, or e.g. v1.2.3)'
+        required: false
+        default: 'latest'
+      api_version:
+        description: 'API image tag (default latest, or e.g. v1.2.3)'
+        required: false
+        default: 'latest'
+
+env:
+  SERVER_DIR: /opt/trac
+  VERSIONS_FILE: .versions
+  UI_REPO: ${{ github.repository_owner }}/trac-portal-ui
+  API_REPO: ${{ github.repository_owner }}/trac-portal-api
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check required secrets
+        run: |
+          MISSING=
+          [ -z "${{ secrets.SSH_HOST }}" ] && MISSING="${MISSING} SSH_HOST"
+          [ -z "${{ secrets.SSH_USER }}" ] && MISSING="${MISSING} SSH_USER"
+          [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ] && MISSING="${MISSING} SSH_PRIVATE_KEY"
+          if [ -n "$MISSING" ]; then
+            echo "::error::Deploy requires the following repository secrets to be set:$MISSING"
+            echo "Configure them under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          echo "Required secrets are set."
+
+      - name: Resolve or validate UI tag
+        id: ui_tag
+        env:
+          UI_REPO: ${{ env.UI_REPO }}
+        run: |
+          WANTED="${{ github.event.inputs.ui_version }}"
+          if [ -z "$WANTED" ] || [ "$WANTED" = "latest" ]; then
+            TAG=$(curl -sS "https://api.github.com/repos/${UI_REPO}/releases/latest" | jq -r '.tag_name // empty')
+            [ -z "$TAG" ] && TAG=$(curl -sS "https://api.github.com/repos/${UI_REPO}/tags?per_page=1" | jq -r '.[0].name // empty')
+            [ -z "$TAG" ] && { echo "::error::Could not resolve latest UI tag for ${UI_REPO}"; exit 1; }
+          else
+            TAG="$WANTED"
+            HTTP=$(curl -sS -o /dev/null -w "%{http_code}" "https://api.github.com/repos/${UI_REPO}/git/ref/tags/${TAG}")
+            if [ "$HTTP" != "200" ]; then
+              echo "::error::UI tag '${TAG}' does not exist in ${UI_REPO}. Check releases/tags."
+              exit 1
+            fi
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve or validate API tag
+        id: api_tag
+        env:
+          API_REPO: ${{ env.API_REPO }}
+        run: |
+          WANTED="${{ github.event.inputs.api_version }}"
+          if [ -z "$WANTED" ] || [ "$WANTED" = "latest" ]; then
+            TAG=$(curl -sS "https://api.github.com/repos/${API_REPO}/releases/latest" | jq -r '.tag_name // empty')
+            [ -z "$TAG" ] && TAG=$(curl -sS "https://api.github.com/repos/${API_REPO}/tags?per_page=1" | jq -r '.[0].name // empty')
+            [ -z "$TAG" ] && { echo "::error::Could not resolve latest API tag for ${API_REPO}"; exit 1; }
+          else
+            TAG="$WANTED"
+            HTTP=$(curl -sS -o /dev/null -w "%{http_code}" "https://api.github.com/repos/${API_REPO}/git/ref/tags/${TAG}")
+            if [ "$HTTP" != "200" ]; then
+              echo "::error::API tag '${TAG}' does not exist in ${API_REPO}. Check releases/tags."
+              exit 1
+            fi
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Get current versions from server
+        id: current
+        run: |
+          CONTENT=$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cat ${{ env.SERVER_DIR }}/${{ env.VERSIONS_FILE }} 2>/dev/null" || true)
+          echo "content<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$CONTENT" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Check downgrade
+        run: |
+          CONTENT="${{ steps.current.outputs.content }}"
+          CURR_UI=$(echo "$CONTENT" | grep '^UI_VERSION=' | cut -d= -f2- | tr -d '\r')
+          CURR_API=$(echo "$CONTENT" | grep '^API_VERSION=' | cut -d= -f2- | tr -d '\r')
+          NEW_UI="${{ steps.ui_tag.outputs.tag }}"
+          NEW_API="${{ steps.api_tag.outputs.tag }}"
+          norm() { echo "$1" | sed 's/^v//'; }
+          # If no version file or empty, skip check (first deploy)
+          if [ -z "$CURR_UI" ] && [ -z "$CURR_API" ]; then
+            echo "No existing version file, skipping downgrade check."
+            exit 0
+          fi
+          ver_lte() {
+            L=$(norm "$1"); R=$(norm "$2")
+            [ "$L" = "$R" ] && return 0
+            SMALLEST=$(echo -e "${L}\n${R}" | sort -V | head -1)
+            [ "$SMALLEST" = "$L" ]
+          }
+          FAIL=0
+          if [ -n "$CURR_UI" ] && ! ver_lte "$CURR_UI" "$NEW_UI"; then
+            echo "Downgrade not allowed: UI $CURR_UI -> $NEW_UI"
+            FAIL=1
+          fi
+          if [ -n "$CURR_API" ] && ! ver_lte "$CURR_API" "$NEW_API"; then
+            echo "Downgrade not allowed: API $CURR_API -> $NEW_API"
+            FAIL=1
+          fi
+          [ $FAIL -eq 1 ] && exit 1
+          echo "Version check passed."
+
+      - name: Sync files to server
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "mkdir -p ${{ env.SERVER_DIR }}/server"
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new docker-compose.yml "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.SERVER_DIR }}/"
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new server/update.sh "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.SERVER_DIR }}/server/"
+          ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "chmod +x ${{ env.SERVER_DIR }}/server/update.sh"
+
+      - name: Deploy (pull and restart)
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            "cd ${{ env.SERVER_DIR }} && export UI_TAG='${{ steps.ui_tag.outputs.tag }}' && export API_TAG='${{ steps.api_tag.outputs.tag }}' && ./server/update.sh"
+
+      - name: Write version file on server
+        run: |
+          {
+            echo "UI_VERSION=${{ steps.ui_tag.outputs.tag }}"
+            echo "API_VERSION=${{ steps.api_tag.outputs.tag }}"
+          } | ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cat > ${{ env.SERVER_DIR }}/${{ env.VERSIONS_FILE }}"

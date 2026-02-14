@@ -13,15 +13,6 @@ show_disk() {
     df -h / | tail -1 | awk '{print "Disk: " $3 " / " $2 " (" $5 " kullanımda)"}'
 }
 
-if [ "$1" != "--prune" ] && [ "$1" != "--keep" ]; then
-    echo "Kullanım: $0 --prune | --keep"
-    echo "  --prune  Güncelleme sonrası eski imajları sil"
-    echo "  --keep   Eski imajları sakla"
-    exit 1
-fi
-
-PRUNE_AFTER=$( [ "$1" = "--prune" ] && echo true || echo false )
-
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  TRAC Portal - Güncelleme"
@@ -61,10 +52,8 @@ echo ""
 
 if [ "$API_STATUS" = "healthy" ] && [ "$UI_STATUS" = "healthy" ]; then
     log "Tüm servisler sağlıklı!"
-    if [ "$PRUNE_AFTER" = true ]; then
-        log "Eski imajlar temizleniyor..."
-        docker image prune -a -f 2>/dev/null || true
-    fi
+    log "Eski imajlar temizleniyor..."
+    docker image prune -a -f 2>/dev/null || true
 else
     warn "Servis durumları: API=$API_STATUS, UI=$UI_STATUS"
     warn "Logları kontrol et: docker compose logs -f"
