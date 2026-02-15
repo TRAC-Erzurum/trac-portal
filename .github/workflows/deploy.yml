@@ -144,6 +144,7 @@ jobs:
 
       - name: Sync files to server
         run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "mkdir -p ${{ env.SERVER_DIR }}"
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new docker-compose.yml update.sh "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.SERVER_DIR }}/"
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "chmod +x ${{ env.SERVER_DIR }}/update.sh"
 
