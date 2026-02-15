@@ -151,8 +151,10 @@ jobs:
 
       - name: Login to GHCR on server
         run: |
+          # Pass token via base64 to avoid shell escaping (quotes, $, \) breaking login
+          TOKEN_B64=$(printf '%s' "${{ secrets.REPO_ACCESS_TOKEN }}" | base64 -w 0)
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            "echo '${{ secrets.REPO_ACCESS_TOKEN }}' | docker login ghcr.io -u '${{ github.repository_owner }}' --password-stdin"
+            "echo '$TOKEN_B64' | base64 -d | docker login ghcr.io -u '${{ github.repository_owner }}' --password-stdin"
 
       - name: Deploy (pull and restart)
         run: |
@@ -165,3 +167,14 @@ jobs:
             echo "UI_VERSION=${{ steps.ui_tag.outputs.tag }}"
             echo "API_VERSION=${{ steps.api_tag.outputs.tag }}"
           } | ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cat > ${{ env.SERVER_DIR }}/${{ env.VERSIONS_FILE }}"
+
+      - name: Server diagnostics (on failure)
+        if: failure()
+        continue-on-error: true
+        run: |
+          echo "::group::docker ps -a"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cd ${{ env.SERVER_DIR }} && docker ps -a" || true
+          echo "::endgroup::"
+          echo "::group::docker compose logs (last 300 lines)"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cd ${{ env.SERVER_DIR }} && docker compose logs --tail=300" || true
+          echo "::endgroup::"
