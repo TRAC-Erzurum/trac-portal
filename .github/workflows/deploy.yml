@@ -144,10 +144,8 @@ jobs:
 
       - name: Sync files to server
         run: |
-          ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "mkdir -p ${{ env.SERVER_DIR }}/server"
-          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new docker-compose.yml "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.SERVER_DIR }}/"
-          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new server/update.sh "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.SERVER_DIR }}/server/"
-          ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "chmod +x ${{ env.SERVER_DIR }}/server/update.sh"
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new docker-compose.yml update.sh "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.SERVER_DIR }}/"
+          ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "chmod +x ${{ env.SERVER_DIR }}/update.sh"
 
       - name: Login to GHCR on server
         run: |
@@ -156,17 +154,21 @@ jobs:
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
             "echo '$TOKEN_B64' | base64 -d | docker login ghcr.io -u '${{ github.repository_owner }}' --password-stdin"
 
+      - name: Write version and env on server
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cd ${{ env.SERVER_DIR }} && \
+            echo 'UI_VERSION=${{ steps.ui_tag.outputs.tag }}' > ${{ env.VERSIONS_FILE }} && \
+            echo 'API_VERSION=${{ steps.api_tag.outputs.tag }}' >> ${{ env.VERSIONS_FILE }}"
+          ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cd ${{ env.SERVER_DIR }} && \
+            (test -f .env && grep -v '^UI_TAG=\|^API_TAG=' .env || true) > .env.tmp && \
+            echo 'UI_TAG=${{ steps.ui_tag.outputs.tag }}' >> .env.tmp && \
+            echo 'API_TAG=${{ steps.api_tag.outputs.tag }}' >> .env.tmp && \
+            mv .env.tmp .env"
+
       - name: Deploy (pull and restart)
         run: |
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            "cd ${{ env.SERVER_DIR }} && export UI_TAG='${{ steps.ui_tag.outputs.tag }}' && export API_TAG='${{ steps.api_tag.outputs.tag }}' && ./server/update.sh"
-
-      - name: Write version file on server
-        run: |
-          {
-            echo "UI_VERSION=${{ steps.ui_tag.outputs.tag }}"
-            echo "API_VERSION=${{ steps.api_tag.outputs.tag }}"
-          } | ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cat > ${{ env.SERVER_DIR }}/${{ env.VERSIONS_FILE }}"
+            "cd ${{ env.SERVER_DIR }} && export UI_TAG='${{ steps.ui_tag.outputs.tag }}' && export API_TAG='${{ steps.api_tag.outputs.tag }}' && ./update.sh"
 
       - name: Server diagnostics (on failure)
         if: failure()

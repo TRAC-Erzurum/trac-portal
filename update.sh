@@ -9,6 +9,8 @@ NC='\033[0m'
 log() { echo -e "${GREEN}[$(date '+%H:%M:%S')]${NC} $1"; }
 warn() { echo -e "${YELLOW}[$(date '+%H:%M:%S')]${NC} $1"; }
 
+# Expect to be run from same directory as docker-compose.yml (e.g. /opt/trac)
+
 # Use last-deployed tags from .versions when not set (e.g. manual run or after reboot)
 if [ -z "${UI_TAG:-}" ] || [ -z "${API_TAG:-}" ]; then
   if [ -f .versions ]; then
@@ -44,7 +46,8 @@ log "Yeni imajlar çekiliyor..."
 docker compose pull
 
 log "Servisler yeniden başlatılıyor..."
-docker compose up -d --remove-orphans
+# Force recreate only UI and API so they get fresh env (APP_VERSION, UI_VERSION); leave db/certbot as-is
+docker compose up -d --force-recreate ui api --remove-orphans
 
 log "Eski loglar temizleniyor..."
 find /var/log -name "*.log" -mtime +7 -delete 2>/dev/null || true
