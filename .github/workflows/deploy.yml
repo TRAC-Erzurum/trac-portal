@@ -42,7 +42,7 @@ jobs:
           fi
           echo "Required secrets are set."
 
-      - name: Resolve or validate UI tag and version
+      - name: Resolve or validate UI tag
         id: ui_tag
         env:
           UI_REPO: ${{ env.UI_REPO }}
@@ -50,28 +50,26 @@ jobs:
         run: |
           WANTED="${{ github.event.inputs.ui_version }}"
           if [ -z "$WANTED" ] || [ "$WANTED" = "latest" ]; then
-            IMAGE_TAG="pre-release"
-            DISPLAY=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} "https://api.github.com/repos/${UI_REPO}/releases/latest" | jq -r '.tag_name // empty')
-            if [ -z "$DISPLAY" ]; then
+            TAG=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} "https://api.github.com/repos/${UI_REPO}/releases/latest" | jq -r '.tag_name // empty')
+            if [ -z "$TAG" ]; then
               TAGS_JSON=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} "https://api.github.com/repos/${UI_REPO}/tags?per_page=1")
-              DISPLAY=$(echo "$TAGS_JSON" | jq -r 'if type == "array" and length > 0 then .[0].name else empty end')
+              TAG=$(echo "$TAGS_JSON" | jq -r 'if type == "array" and length > 0 then .[0].name else empty end')
             fi
-            if [ -z "$DISPLAY" ]; then
-              DISPLAY=""
+            if [ -z "$TAG" ]; then
+              echo "::error::No release or tag in ${UI_REPO}. Create a tag first."
+              exit 1
             fi
           else
-            IMAGE_TAG="$WANTED"
-            DISPLAY="$WANTED"
-            HTTP=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} -o /dev/null -w "%{http_code}" "https://api.github.com/repos/${UI_REPO}/git/ref/tags/${IMAGE_TAG}")
+            TAG="$WANTED"
+            HTTP=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} -o /dev/null -w "%{http_code}" "https://api.github.com/repos/${UI_REPO}/git/ref/tags/${TAG}")
             if [ "$HTTP" != "200" ]; then
-              echo "::error::UI tag '${IMAGE_TAG}' does not exist in ${UI_REPO}. Check releases/tags."
+              echo "::error::UI tag '${TAG}' does not exist in ${UI_REPO}. Check releases/tags."
               exit 1
             fi
           fi
-          echo "tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
-          echo "version=$DISPLAY" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
-      - name: Resolve or validate API tag and version
+      - name: Resolve or validate API tag
         id: api_tag
         env:
           API_REPO: ${{ env.API_REPO }}
@@ -79,26 +77,24 @@ jobs:
         run: |
           WANTED="${{ github.event.inputs.api_version }}"
           if [ -z "$WANTED" ] || [ "$WANTED" = "latest" ]; then
-            IMAGE_TAG="pre-release"
-            DISPLAY=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} "https://api.github.com/repos/${API_REPO}/releases/latest" | jq -r '.tag_name // empty')
-            if [ -z "$DISPLAY" ]; then
+            TAG=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} "https://api.github.com/repos/${API_REPO}/releases/latest" | jq -r '.tag_name // empty')
+            if [ -z "$TAG" ]; then
               TAGS_JSON=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} "https://api.github.com/repos/${API_REPO}/tags?per_page=1")
-              DISPLAY=$(echo "$TAGS_JSON" | jq -r 'if type == "array" and length > 0 then .[0].name else empty end')
+              TAG=$(echo "$TAGS_JSON" | jq -r 'if type == "array" and length > 0 then .[0].name else empty end')
             fi
-            if [ -z "$DISPLAY" ]; then
-              DISPLAY=""
+            if [ -z "$TAG" ]; then
+              echo "::error::No release or tag in ${API_REPO}. Create a tag first."
+              exit 1
             fi
           else
-            IMAGE_TAG="$WANTED"
-            DISPLAY="$WANTED"
-            HTTP=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} -o /dev/null -w "%{http_code}" "https://api.github.com/repos/${API_REPO}/git/ref/tags/${IMAGE_TAG}")
+            TAG="$WANTED"
+            HTTP=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} -o /dev/null -w "%{http_code}" "https://api.github.com/repos/${API_REPO}/git/ref/tags/${TAG}")
             if [ "$HTTP" != "200" ]; then
-              echo "::error::API tag '${IMAGE_TAG}' does not exist in ${API_REPO}. Check releases/tags."
+              echo "::error::API tag '${TAG}' does not exist in ${API_REPO}. Check releases/tags."
               exit 1
             fi
           fi
-          echo "tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
-          echo "version=$DISPLAY" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Configure SSH
         run: |
@@ -120,8 +116,8 @@ jobs:
           CONTENT="${{ steps.current.outputs.content }}"
           CURR_UI=$(echo "$CONTENT" | grep '^UI_VERSION=' | cut -d= -f2- | tr -d '\r')
           CURR_API=$(echo "$CONTENT" | grep '^API_VERSION=' | cut -d= -f2- | tr -d '\r')
-          NEW_UI="${{ steps.ui_tag.outputs.version }}"
-          NEW_API="${{ steps.api_tag.outputs.version }}"
+          NEW_UI="${{ steps.ui_tag.outputs.tag }}"
+          NEW_API="${{ steps.api_tag.outputs.tag }}"
           norm() { echo "$1" | sed 's/^v//'; }
           # If no version file or empty, skip check (first deploy)
           if [ -z "$CURR_UI" ] && [ -z "$CURR_API" ]; then
@@ -163,13 +159,13 @@ jobs:
       - name: Deploy (pull and restart)
         run: |
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            "cd ${{ env.SERVER_DIR }} && export UI_TAG='${{ steps.ui_tag.outputs.tag }}' && export API_TAG='${{ steps.api_tag.outputs.tag }}' && export UI_VERSION='${{ steps.ui_tag.outputs.version }}' && export API_VERSION='${{ steps.api_tag.outputs.version }}' && ./server/update.sh"
+            "cd ${{ env.SERVER_DIR }} && export UI_TAG='${{ steps.ui_tag.outputs.tag }}' && export API_TAG='${{ steps.api_tag.outputs.tag }}' && ./server/update.sh"
 
       - name: Write version file on server
         run: |
           {
-            echo "UI_VERSION=${{ steps.ui_tag.outputs.version }}"
-            echo "API_VERSION=${{ steps.api_tag.outputs.version }}"
+            echo "UI_VERSION=${{ steps.ui_tag.outputs.tag }}"
+            echo "API_VERSION=${{ steps.api_tag.outputs.tag }}"
           } | ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cat > ${{ env.SERVER_DIR }}/${{ env.VERSIONS_FILE }}"
 
       - name: Server diagnostics (on failure)
