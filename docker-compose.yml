@@ -40,6 +40,8 @@ services:
       - NODE_ENV=${NODE_ENV:-production}
       - PORT=8000
       - DOMAIN=${DOMAIN}
+      - APP_VERSION=${API_VERSION:-${API_TAG:-}}
+      - UI_VERSION=${UI_VERSION:-${UI_TAG:-}}
       - DB_HOST=db
       - DB_PORT=5432
       - DB_USERNAME=${DB_USER:-postgres}
