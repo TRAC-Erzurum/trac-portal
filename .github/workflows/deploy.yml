@@ -12,7 +12,8 @@ on:
         required: false
         default: 'latest'
 
-# UI/API repos are private: REPO_ACCESS_TOKEN (PAT with repo read) is required to resolve tags.
+# UI/API repos and GHCR images are private. Use a Classic PAT (fine-grained does not support packages).
+# REPO_ACCESS_TOKEN: Classic PAT with repo + read:packages. GHCR login uses github.repository_owner.
 env:
   SERVER_DIR: /opt/trac
   VERSIONS_FILE: .versions
@@ -36,7 +37,7 @@ jobs:
           if [ -n "$MISSING" ]; then
             echo "::error::Deploy requires the following repository secrets to be set:$MISSING"
             echo "Configure them under Settings → Secrets and variables → Actions."
-            echo "REPO_ACCESS_TOKEN: PAT with repo read, for private trac-portal-ui / trac-portal-api."
+            echo "REPO_ACCESS_TOKEN: Classic PAT (not fine-grained) with repo + read:packages."
             exit 1
           fi
           echo "Required secrets are set."
@@ -147,6 +148,11 @@ jobs:
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new docker-compose.yml "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.SERVER_DIR }}/"
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new server/update.sh "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.SERVER_DIR }}/server/"
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "chmod +x ${{ env.SERVER_DIR }}/server/update.sh"
+
+      - name: Login to GHCR on server
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            "echo '${{ secrets.REPO_ACCESS_TOKEN }}' | docker login ghcr.io -u '${{ github.repository_owner }}' --password-stdin"
 
       - name: Deploy (pull and restart)
         run: |
