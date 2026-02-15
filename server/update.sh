@@ -9,6 +9,18 @@ NC='\033[0m'
 log() { echo -e "${GREEN}[$(date '+%H:%M:%S')]${NC} $1"; }
 warn() { echo -e "${YELLOW}[$(date '+%H:%M:%S')]${NC} $1"; }
 
+# Use last-deployed tags from .versions when not set (e.g. manual run or after reboot)
+if [ -z "${UI_TAG:-}" ] || [ -z "${API_TAG:-}" ]; then
+  if [ -f .versions ]; then
+    # shellcheck source=/dev/null
+    set -a
+    source ./.versions 2>/dev/null || true
+    set +a
+    [ -z "${UI_TAG:-}" ] && [ -n "${UI_VERSION:-}" ] && export UI_TAG="$UI_VERSION"
+    [ -z "${API_TAG:-}" ] && [ -n "${API_VERSION:-}" ] && export API_TAG="$API_VERSION"
+  fi
+fi
+
 show_disk() {
     df -h / | tail -1 | awk '{print "Disk: " $3 " / " $2 " (" $5 " kullanımda)"}'
 }
