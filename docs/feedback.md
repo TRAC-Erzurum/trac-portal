@@ -1,3 +1,0 @@
-## Geri Bildirim Formu
-
-detaylar yakında eklenecektir...

@@ -1,3 +1,0 @@
-## Bug Bildirme
-
-detaylar yakında eklenecektir...
