@@ -12,6 +12,7 @@ on:
         required: false
         default: 'latest'
 
+# UI/API repos are private: REPO_ACCESS_TOKEN (PAT with repo read) is required to resolve tags.
 env:
   SERVER_DIR: /opt/trac
   VERSIONS_FILE: .versions
@@ -31,9 +32,11 @@ jobs:
           [ -z "${{ secrets.SSH_HOST }}" ] && MISSING="${MISSING} SSH_HOST"
           [ -z "${{ secrets.SSH_USER }}" ] && MISSING="${MISSING} SSH_USER"
           [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ] && MISSING="${MISSING} SSH_PRIVATE_KEY"
+          [ -z "${{ secrets.REPO_ACCESS_TOKEN }}" ] && MISSING="${MISSING} REPO_ACCESS_TOKEN"
           if [ -n "$MISSING" ]; then
             echo "::error::Deploy requires the following repository secrets to be set:$MISSING"
             echo "Configure them under Settings → Secrets and variables → Actions."
+            echo "REPO_ACCESS_TOKEN: PAT with repo read, for private trac-portal-ui / trac-portal-api."
             exit 1
           fi
           echo "Required secrets are set."
@@ -42,18 +45,22 @@ jobs:
         id: ui_tag
         env:
           UI_REPO: ${{ env.UI_REPO }}
+          GH_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         run: |
           WANTED="${{ github.event.inputs.ui_version }}"
           if [ -z "$WANTED" ] || [ "$WANTED" = "latest" ]; then
-            TAG=$(curl -sS "https://api.github.com/repos/${UI_REPO}/releases/latest" | jq -r '.tag_name // empty')
+            TAG=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} "https://api.github.com/repos/${UI_REPO}/releases/latest" | jq -r '.tag_name // empty')
             if [ -z "$TAG" ]; then
-              TAGS_JSON=$(curl -sS "https://api.github.com/repos/${UI_REPO}/tags?per_page=1")
+              TAGS_JSON=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} "https://api.github.com/repos/${UI_REPO}/tags?per_page=1")
               TAG=$(echo "$TAGS_JSON" | jq -r 'if type == "array" and length > 0 then .[0].name else empty end')
             fi
-            [ -z "$TAG" ] && { echo "::error::Could not resolve latest UI tag for ${UI_REPO}"; exit 1; }
+            if [ -z "$TAG" ]; then
+              echo "::warning::No release or tag in ${UI_REPO}; using image tag 'latest'."
+              TAG="latest"
+            fi
           else
             TAG="$WANTED"
-            HTTP=$(curl -sS -o /dev/null -w "%{http_code}" "https://api.github.com/repos/${UI_REPO}/git/ref/tags/${TAG}")
+            HTTP=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} -o /dev/null -w "%{http_code}" "https://api.github.com/repos/${UI_REPO}/git/ref/tags/${TAG}")
             if [ "$HTTP" != "200" ]; then
               echo "::error::UI tag '${TAG}' does not exist in ${UI_REPO}. Check releases/tags."
               exit 1
@@ -65,18 +72,22 @@ jobs:
         id: api_tag
         env:
           API_REPO: ${{ env.API_REPO }}
+          GH_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         run: |
           WANTED="${{ github.event.inputs.api_version }}"
           if [ -z "$WANTED" ] || [ "$WANTED" = "latest" ]; then
-            TAG=$(curl -sS "https://api.github.com/repos/${API_REPO}/releases/latest" | jq -r '.tag_name // empty')
+            TAG=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} "https://api.github.com/repos/${API_REPO}/releases/latest" | jq -r '.tag_name // empty')
             if [ -z "$TAG" ]; then
-              TAGS_JSON=$(curl -sS "https://api.github.com/repos/${API_REPO}/tags?per_page=1")
+              TAGS_JSON=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} "https://api.github.com/repos/${API_REPO}/tags?per_page=1")
               TAG=$(echo "$TAGS_JSON" | jq -r 'if type == "array" and length > 0 then .[0].name else empty end')
             fi
-            [ -z "$TAG" ] && { echo "::error::Could not resolve latest API tag for ${API_REPO}"; exit 1; }
+            if [ -z "$TAG" ]; then
+              echo "::warning::No release or tag in ${API_REPO}; using image tag 'latest'."
+              TAG="latest"
+            fi
           else
             TAG="$WANTED"
-            HTTP=$(curl -sS -o /dev/null -w "%{http_code}" "https://api.github.com/repos/${API_REPO}/git/ref/tags/${TAG}")
+            HTTP=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} -o /dev/null -w "%{http_code}" "https://api.github.com/repos/${API_REPO}/git/ref/tags/${TAG}")
             if [ "$HTTP" != "200" ]; then
               echo "::error::API tag '${TAG}' does not exist in ${API_REPO}. Check releases/tags."
               exit 1
@@ -119,11 +130,11 @@ jobs:
             [ "$SMALLEST" = "$L" ]
           }
           FAIL=0
-          if [ -n "$CURR_UI" ] && ! ver_lte "$CURR_UI" "$NEW_UI"; then
+          if [ -n "$CURR_UI" ] && [ "$NEW_UI" != "latest" ] && ! ver_lte "$CURR_UI" "$NEW_UI"; then
             echo "Downgrade not allowed: UI $CURR_UI -> $NEW_UI"
             FAIL=1
           fi
-          if [ -n "$CURR_API" ] && ! ver_lte "$CURR_API" "$NEW_API"; then
+          if [ -n "$CURR_API" ] && [ "$NEW_API" != "latest" ] && ! ver_lte "$CURR_API" "$NEW_API"; then
             echo "Downgrade not allowed: API $CURR_API -> $NEW_API"
             FAIL=1
           fi
