@@ -169,6 +169,7 @@ jobs:
             mv .env.tmp .env"
 
       - name: Deploy (pull and restart)
+        continue-on-error: true
         run: |
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
             "cd ${{ env.SERVER_DIR }} && export UI_TAG='${{ steps.ui_tag.outputs.tag }}' && export API_TAG='${{ steps.api_tag.outputs.tag }}' && ./update.sh"
