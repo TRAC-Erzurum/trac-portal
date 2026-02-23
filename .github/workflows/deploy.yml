@@ -13,6 +13,10 @@ on:
         description: 'API image tag (default latest, or e.g. v1.2.3)'
         required: false
         default: 'latest'
+      force_deploy:
+        description: 'Skip downgrade check (true/false)'
+        required: false
+        default: 'false'
 
 # UI/API repos and GHCR images are private. Use a Classic PAT (fine-grained does not support packages).
 # REPO_ACCESS_TOKEN: Classic PAT with repo + read:packages. GHCR login uses github.repository_owner.
@@ -115,6 +119,11 @@ jobs:
 
       - name: Check downgrade
         run: |
+          if [ "${{ github.event.inputs.force_deploy }}" = "true" ]; then
+            echo "Force deploy enabled. Skipping downgrade check."
+            exit 0
+          fi
+
           CONTENT="${{ steps.current.outputs.content }}"
           CURR_UI=$(echo "$CONTENT" | grep '^UI_VERSION=' | cut -d= -f2- | tr -d '\r')
           CURR_API=$(echo "$CONTENT" | grep '^API_VERSION=' | cut -d= -f2- | tr -d '\r')
