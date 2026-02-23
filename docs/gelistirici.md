@@ -90,6 +90,24 @@ docker compose up -d
 
 Yerel geliştirme için API ve UI’yı ayrı çalıştırın; ilgili submodule README’sine bakın.
 
+## İç ağdan erişim (LAN)
+
+UI ve API'yi aynı makinede çalıştırıp **iç ağdaki diğer cihazlardan** (telefon, tablet, başka bilgisayar) erişmek için:
+
+1. **Backend:** API zaten `0.0.0.0` üzerinde dinler; ek ayar gerekmez.
+2. **Frontend:** Vite dev sunucusu `host: true` ile tüm arayüzlerde dinler; `/api` istekleri otomatik olarak backend'e proxy edilir.
+3. **Ortam:** UI projesinde (trac-portal-ui) `.env` içinde **iç ağ kullanımı için** API adresini relative yapın:
+   ```bash
+   VITE_API_URL=/api
+   ```
+   Böylece tarayıcı istekleri `http://<makine-ip>:5173/api` üzerinden gider ve Vite bu istekleri backend'e yönlendirir.
+4. **Erişim:** İç ağdaki cihazlarda tarayıcıda şu adresi açın:
+   - **UI:** `http://<bu-makinanin-yerel-ip>:5173`  
+   Örnek: `http://192.168.1.100:5173`  
+   Makinenin yerel IP'sini öğrenmek: Windows `ipconfig`, macOS/Linux `ip addr` veya `ifconfig`.
+
+**Not:** Sadece kendi bilgisayarınızdan `localhost` ile kullanacaksanız `VITE_API_URL=http://localhost:8000/api` kalabilir. İç ağdan erişecek cihazlar varsa `VITE_API_URL=/api` kullanın.
+
 ## Deployment (ürün sahipleri)
 
 Ana repoda [.github/workflows/deploy.yml](../.github/workflows/deploy.yml) manuel tetiklenir (workflow_dispatch). UI/API sürümü seçilebilir (varsayılan latest). SSH ile sunucuya dosya atılır, GHCR’dan imaj çekilir. Gerekli repo secret’ları: `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `REPO_ACCESS_TOKEN`. Bu süreci ürün sahipleri, merge sonrası son testin ardından başlatır.
