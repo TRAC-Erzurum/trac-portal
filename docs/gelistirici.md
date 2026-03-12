@@ -73,10 +73,33 @@ Kökte `.env.example` → `.env` kopyalayın. Örnek değişkenler:
 | `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME` | PostgreSQL (docker-compose’da `DB_USER` da kullanılır) |
 | `JWT_SECRET`, `COOKIE_SECRET`, `SESSION_SECRET`, `JWT_EXPIRES_IN` | Oturum ve güvenlik |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL` | Google OAuth |
+| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile (CAPTCHA) |
+| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` | Cloudflare R2 (yüklemeler) |
 | `DOMAIN` | Production domain (deploy için) |
 | `NODE_ENV` | Ortam (production / development) |
 
 UI ve API’ye özel değişkenler ilgili submodule README’lerinde.
+
+### Environment'ları nasıl set edeceğim?
+
+İki yer var: **GitHub (sadece deploy için)** ve **sunucu (uygulama config)**.
+
+**1) GitHub Actions (deploy workflow)**  
+Ana repo → **Settings → Secrets and variables → Actions** bölümünde şu **repository secrets** tanımlanmalı (deploy job bunları kullanır):
+
+| Secret | Açıklama |
+|--------|----------|
+| `SSH_HOST` | Deploy edilecek sunucunun IP veya host adı |
+| `SSH_USER` | SSH kullanıcı adı |
+| `SSH_PRIVATE_KEY` | Bu kullanıcıya ait SSH private key (tüm içerik, `-----BEGIN ... END-----` dahil) |
+| `REPO_ACCESS_TOKEN` | Classic PAT (fine-grained değil); `repo` + `read:packages` yetkisi. GHCR'dan imaj çekmek için. |
+
+Workflow sadece sunucuya bağlanıp `docker-compose` ve `update.sh` atar; **uygulama ortam değişkenlerini (DB, JWT, R2 vb.) GitHub'dan sunucuya yazmaz.**
+
+**2) Sunucu (production .env)**  
+Tüm uygulama config'i **deploy edilen sunucuda** tutulur. Örneğin `/opt/trac/.env` (veya `SERVER_DIR` ne ise orada). Bu dosyayı ilk kurulumda siz oluşturursunuz; deploy workflow yalnızca `UI_TAG` ve `API_TAG` satırlarını günceller, diğer satırlara dokunmaz.
+
+Sunucuda olması gerekenler (örnek): `DOMAIN`, `NODE_ENV`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET`, `COOKIE_SECRET`, `SESSION_SECRET`, `GOOGLE_CLIENT_*`, `TURNSTILE_SECRET_KEY`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`. API'nin `trac-portal-api/.env.example` dosyası tam listeyi verir; sunucudaki `.env`'i buna göre doldurun.
 
 ## Docker (production)
 
