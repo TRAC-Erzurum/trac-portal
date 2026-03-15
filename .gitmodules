@@ -10,3 +10,6 @@
 [submodule "trac-portal-api"]
 	path = trac-portal-api
 	url = https://github.com/TRAC-Erzurum/trac-portal-api.git
+[submodule "mmdvm-link"]
+	path = mmdvm-link
+	url = https://github.com/TRAC-Erzurum/mmdvm-link.git
