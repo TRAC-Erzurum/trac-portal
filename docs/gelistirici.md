@@ -2,7 +2,7 @@
 
 Bu sayfa projeye **kod veya teknik katkı** sunacaklar içindir. Genel bilgi ve kullanıcı geri bildirimi [README](../README.md)’de; yalnızca hata/öneri iletmek isteyenler README’deki **“Geri bildirim / hata bildirimi”** bölümüne ve [trac-portal — Issues](https://github.com/TRAC-Erzurum/trac-portal/issues) sayfasına baksın.
 
-**Kısa özet:** Issue’lar yalnızca **ana repoda** (trac-portal). PR’lar değişikliğin olduğu repoya açılır: UI → trac-portal-ui, API → trac-portal-api; hedef branch **master** (koruma altında, doğrudan push yok). Deploy: PR merge sonrası ürün sahipleri son testi yapar ve deployment’ı manuel başlatır; geliştirici deploy tetiklemez.
+**Kısa özet:** Issue’lar yalnızca **ana repoda** (trac-portal). PR’lar değişikliğin olduğu repoya açılır: UI → trac-portal-ui, API → trac-portal-api; hedef branch **main** (koruma altında, doğrudan push yok). Deploy: PR merge sonrası ürün sahipleri son testi yapar ve deployment’ı manuel başlatır; geliştirici deploy tetiklemez.
 
 ---
 
@@ -25,12 +25,12 @@ Submodule’leri henüz klonlamadıysanız: `git submodule update --init --recur
    Tüm issue’lar **yalnızca ana repoda** (trac-portal): [trac-portal — Issues](https://github.com/TRAC-Erzurum/trac-portal/issues). Yeni görev almak veya hata/öneri takip etmek için buraya bakın.
 
 2. **PR nereye açılır?**  
-   UI kod değişiklikleri için PR’ı **trac-portal-ui** repo’suna, **master** branch’ine açarsınız (ana repoya değil).  
+   UI kod değişiklikleri için PR’ı **trac-portal-ui** repo’suna, **main** branch’ine açarsınız (ana repoya değil).  
    Repo: [TRAC-Erzurum/trac-portal-ui](https://github.com/TRAC-Erzurum/trac-portal-ui).  
-   **master** korumalıdır; doğrudan push yok, katkı yalnızca PR ile.
+   **main** korumalıdır; doğrudan push yok, katkı yalnızca PR ile.
 
 3. **Akış:**  
-   trac-portal-ui’yi fork’layın → kendi fork’unuzda branch açın → değişikliği yapın → [TRAC-Erzurum/trac-portal-ui](https://github.com/TRAC-Erzurum/trac-portal-ui) içinde **master**’a Pull Request açın.
+   trac-portal-ui’yi fork’layın → kendi fork’unuzda branch açın → değişikliği yapın → [TRAC-Erzurum/trac-portal-ui](https://github.com/TRAC-Erzurum/trac-portal-ui) içinde **main**’e Pull Request açın.
 
 4. **PR kuralları:**  
    - UI değişikliklerinde PR açıklamasında **ekran görüntüsü** zorunlu.  
@@ -47,12 +47,12 @@ Submodule’leri henüz klonlamadıysanız: `git submodule update --init --recur
    Yine **yalnızca ana repoda** (trac-portal): [trac-portal — Issues](https://github.com/TRAC-Erzurum/trac-portal/issues).
 
 2. **PR nereye açılır?**  
-   Backend kod değişiklikleri için PR’ı **trac-portal-api** repo’suna, **master** branch’ine açarsınız.  
+   Backend kod değişiklikleri için PR’ı **trac-portal-api** repo’suna, **main** branch’ine açarsınız.  
    Repo: [TRAC-Erzurum/trac-portal-api](https://github.com/TRAC-Erzurum/trac-portal-api).  
-   **master** korumalıdır; doğrudan push yok, katkı yalnızca PR ile.
+   **main** korumalıdır; doğrudan push yok, katkı yalnızca PR ile.
 
 3. **Akış:**  
-   trac-portal-api’yi fork’layın → kendi fork’unuzda branch açın → değişikliği yapın → [TRAC-Erzurum/trac-portal-api](https://github.com/TRAC-Erzurum/trac-portal-api) içinde **master**’a Pull Request açın.
+   trac-portal-api’yi fork’layın → kendi fork’unuzda branch açın → değişikliği yapın → [TRAC-Erzurum/trac-portal-api](https://github.com/TRAC-Erzurum/trac-portal-api) içinde **main**’e Pull Request açın.
 
 4. **PR kuralları:**  
    - Tasarım/API kurallarına uyun; gerekirse ana repodaki [.cursor/rules](../.cursor/rules) (backend-structure, api-patterns vb.)’e bakın.

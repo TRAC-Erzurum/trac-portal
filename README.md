@@ -21,7 +21,7 @@ Portal; çevrimlere katılım, operatör bilgileri ve istatistik yönetimini kol
 
 ## Yerelde çalıştırma ve kod katkısı
 
-**Yazılımcıysanız:** Issue’lar yalnızca **ana repoda** (trac-portal). PR’lar, değişikliğin olduğu proje repo’suna **master**’a açılır (master korumalıdır; doğrudan push yok). UI ve API için adım adım katkı rehberi, kurulum, ortam değişkenleri, Docker ve deploy akışı: **[Geliştirici dökümanı](docs/gelistirici.md)**.
+**Yazılımcıysanız:** Issue’lar yalnızca **ana repoda** (trac-portal). PR’lar, değişikliğin olduğu proje repo’suna **main**’e açılır (main korumalıdır; doğrudan push yok). UI ve API için adım adım katkı rehberi, kurulum, ortam değişkenleri, Docker ve deploy akışı: **[Geliştirici dökümanı](docs/gelistirici.md)**.
 
 - API kurulum ve komutlar: [trac-portal-api/README.md](trac-portal-api/README.md)
 - UI kurulum ve komutlar: [trac-portal-ui/README.md](trac-portal-ui/README.md)
