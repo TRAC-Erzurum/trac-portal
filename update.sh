@@ -11,6 +11,14 @@ warn() { echo -e "${YELLOW}[$(date '+%H:%M:%S')]${NC} $1"; }
 
 # Expect to be run from same directory as docker-compose.yml (e.g. /opt/trac)
 
+# Load .env so DOMAIN (and TLS cert path) is available for shared cert store
+if [ -f .env ]; then
+  set -a
+  # shellcheck source=/dev/null
+  source ./.env 2>/dev/null || true
+  set +a
+fi
+
 # Use last-deployed tags from .versions when not set (e.g. manual run or after reboot)
 if [ -z "${UI_TAG:-}" ] || [ -z "${API_TAG:-}" ]; then
   if [ -f .versions ]; then
@@ -41,6 +49,22 @@ echo ""
 log "Ön temizlik..."
 docker image prune -f 2>/dev/null || true
 docker builder prune -f 2>/dev/null || true
+
+# Shared TLS cert store: any service that needs TLS mounts ./volumes/tls-certs and runs as GID 1000
+TLS_STORE="${TLS_CERTS_DIR:-./volumes/tls-certs}"
+TLS_GID="${TLS_CERTS_GID:-1000}"
+if [ -n "${DOMAIN:-}" ] && [ -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ] && [ -f "/etc/letsencrypt/live/${DOMAIN}/privkey.pem" ]; then
+  log "TLS sertifika deposu güncelleniyor ($TLS_STORE)..."
+  mkdir -p "$TLS_STORE"
+  cp -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" "$TLS_STORE/fullchain.pem"
+  cp -f "/etc/letsencrypt/live/${DOMAIN}/privkey.pem" "$TLS_STORE/privkey.pem"
+  chown -R "root:${TLS_GID}" "$TLS_STORE"
+  chmod 644 "$TLS_STORE/fullchain.pem"
+  chmod 640 "$TLS_STORE/privkey.pem"
+else
+  [ -z "${DOMAIN:-}" ] && warn "DOMAIN boş; TLS deposu atlanıyor." || true
+  [ -n "${DOMAIN:-}" ] && [ ! -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ] && warn "LetsEncrypt sertifikası yok; TLS deposu atlanıyor." || true
+fi
 
 log "Yeni imajlar çekiliyor..."
 # Always update core services

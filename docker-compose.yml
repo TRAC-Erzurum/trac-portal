@@ -12,14 +12,12 @@ services:
     environment:
       - DOMAIN=${DOMAIN}
       - MQTT_TLS_DOMAIN=${MQTT_TLS_DOMAIN:-${DOMAIN}}
-      - LE_LIVE_DIR=/etc/letsencrypt/live
     volumes:
-      # Shared config volume (rw): mosquitto.conf, acl, passwd live here
       - ./volumes/mmdvm-mqtt:/mosquitto/config
-      # Persistence volume (rw) kept separate to avoid overlapping mounts
       - ./volumes/mmdvm-mqtt-data:/mosquitto/data
       - ./server/mmdvm-link:/init:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
+      # Shared TLS store (provisioned by update.sh; GID 1000 can read key)
+      - ./volumes/tls-certs:/etc/tls:ro
     networks:
       - trac-network
     restart: unless-stopped

@@ -1,77 +1,52 @@
 #!/bin/sh
 set -eu
 
-# Single-container bootstrap for Mosquitto config stored on a shared volume.
-# - Ensures /mosquitto/config/{mosquitto.conf,acl,passwd} exist (idempotent)
-# - Validates LetsEncrypt cert/key at /etc/letsencrypt/live/${DOMAIN}/fullchain.pem + privkey.pem
-# - Does NOT copy config elsewhere: Mosquitto reads live files from /mosquitto/config
-
-DOMAIN="${DOMAIN:-}"
-TLS_DOMAIN="${MQTT_TLS_DOMAIN:-${DOMAIN}}"
-
-LE_LIVE_DIR="${LE_LIVE_DIR:-/etc/letsencrypt/live}"
-CERTFILE="$LE_LIVE_DIR/$TLS_DOMAIN/fullchain.pem"
-KEYFILE="$LE_LIVE_DIR/$TLS_DOMAIN/privkey.pem"
+# Mosquitto bootstrap: uses shared TLS store at /etc/tls (provisioned by update.sh).
+# Runs as UID/GID 1000 so it can read the key (group 1000). No per-service cert copy.
 
 CONF_PATH="/mosquitto/config/mosquitto.conf"
 ACL_PATH="/mosquitto/config/acl"
 PASSWD_PATH="/mosquitto/config/passwd"
+# Shared store: fullchain.pem and privkey.pem, readable by GID 1000
+CERTFILE="/etc/tls/fullchain.pem"
+KEYFILE="/etc/tls/privkey.pem"
+TLS_UID="${TLS_CERTS_UID:-1000}"
+TLS_GID="${TLS_CERTS_GID:-1000}"
 
 umask 077
 
 mkdir -p /mosquitto/config /mosquitto/data
 
-if [ -z "$TLS_DOMAIN" ]; then
-  echo "ERROR: DOMAIN not set; required for TLS cert validation." >&2
-  exit 1
-fi
-
 if [ ! -f "$CERTFILE" ] || [ ! -f "$KEYFILE" ]; then
-  echo "ERROR: Missing TLS cert/key for domain '$TLS_DOMAIN'." >&2
+  echo "ERROR: Shared TLS store missing. Run update.sh to provision ./volumes/tls-certs." >&2
   echo "Expected: $CERTFILE and $KEYFILE" >&2
   exit 1
 fi
 
-# External listener uses password auth; ensure passwd file exists (may be empty).
 if [ ! -f "$PASSWD_PATH" ]; then
-  : >"$PASSWD_PATH"
-  chmod 600 "$PASSWD_PATH" || true
+  touch "$PASSWD_PATH"
 fi
 
-# Ensure Mosquitto can read/write its own state on the mounted volumes.
-# TLS certs under /etc/letsencrypt remain root-owned; mosquitto process will run as root
-# (container user 0:0, no "user" directive in config) so it can read them.
-chown -R mosquitto:mosquitto /mosquitto/config /mosquitto/data 2>/dev/null || true
-chmod 700 /mosquitto/config /mosquitto/data 2>/dev/null || true
-chmod 600 "$PASSWD_PATH" 2>/dev/null || true
-
-if [ ! -s "$ACL_PATH" ]; then
-  cat >"$ACL_PATH" <<'EOF'
+cat >"$ACL_PATH" <<'ACLEOF'
 pattern write nodes/telemetry/%u
 pattern write nodes/status/%u
 topic write nodes/register
 pattern read nodes/cmd/%u
 pattern read nodes/register/ack/%u
-EOF
-fi
+ACLEOF
 
-if [ ! -s "$CONF_PATH" ]; then
-  cat >"$CONF_PATH" <<EOF
+cat >"$CONF_PATH" <<CONFEOF
 per_listener_settings true
 
-# Internal listener (no auth/acl). Network-only; do NOT publish to host.
 listener 1883
 protocol mqtt
 listener_allow_anonymous true
 
-# External listener (TLS-only) published to host.
 listener 8883
 protocol mqtt
-
 listener_allow_anonymous false
-password_file /mosquitto/config/passwd
-acl_file /mosquitto/config/acl
-
+password_file $PASSWD_PATH
+acl_file $ACL_PATH
 certfile $CERTFILE
 keyfile $KEYFILE
 require_certificate false
@@ -81,8 +56,15 @@ persistence_location /mosquitto/data/
 autosave_interval 60
 
 log_dest stdout
-EOF
+CONFEOF
+
+chown -R "${TLS_UID}:${TLS_GID}" /mosquitto/config /mosquitto/data
+chmod 755 /mosquitto/config /mosquitto/data
+chmod 600 "$PASSWD_PATH"
+chmod 644 "$ACL_PATH" "$CONF_PATH"
+
+# Drop to TLS_UID:TLS_GID so process can read shared cert store (key is chmod 640, group TLS_GID)
+if command -v runuser >/dev/null 2>&1; then
+  exec runuser -u "$TLS_UID" -g "$TLS_GID" -- mosquitto -c "$CONF_PATH"
 fi
-
-exec mosquitto -c /mosquitto/config/mosquitto.conf
-
+exec su "$TLS_UID" -s /bin/sh -c "exec mosquitto -c $CONF_PATH"
