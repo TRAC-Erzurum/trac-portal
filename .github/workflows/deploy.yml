@@ -213,38 +213,56 @@ jobs:
 
       - name: Write version and env on server
         run: |
-          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          MOSQUITTO_TAG="${{ github.event.inputs.mosquitto_version }}"
+          ENABLE_MMDVM_LINK="${{ github.event.inputs.enable_mmdvm_link }}"
+          [ -z "$MOSQUITTO_TAG" ] && MOSQUITTO_TAG="2"
+          [ -z "$ENABLE_MMDVM_LINK" ] && ENABLE_MMDVM_LINK="true"
+
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cd ${{ env.SERVER_DIR }} && \
             echo 'UI_VERSION=${{ steps.ui_tag.outputs.tag }}' > ${{ env.VERSIONS_FILE }} && \
             echo 'API_VERSION=${{ steps.api_tag.outputs.tag }}' >> ${{ env.VERSIONS_FILE }} && \
-            echo 'MOSQUITTO_VERSION=${{ github.event.inputs.mosquitto_version }}' >> ${{ env.VERSIONS_FILE }} && \
-            echo 'MMDVM_LINK_SERVER_VERSION=${{ steps.mmdvm_tag.outputs.tag }}' >> ${{ env.VERSIONS_FILE }} && \
-            echo 'GITHUB_OWNER=${{ github.repository_owner }}' >> ${{ env.VERSIONS_FILE }} && \
-            echo 'GITHUB_OWNER_LC='${OWNER_LC} >> ${{ env.VERSIONS_FILE }}"
+            echo 'MOSQUITTO_VERSION='"$MOSQUITTO_TAG" >> ${{ env.VERSIONS_FILE }} && \
+            echo 'MMDVM_LINK_SERVER_VERSION=${{ steps.mmdvm_tag.outputs.tag }}' >> ${{ env.VERSIONS_FILE }}"
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cd ${{ env.SERVER_DIR }} && \
-            (test -f .env && grep -v '^UI_TAG=\|^API_TAG=\|^MOSQUITTO_TAG=\|^MMDVM_LINK_SERVER_TAG=\|^GITHUB_OWNER=\|^GITHUB_OWNER_LC=\|^ENABLE_MMDVM_LINK=' .env || true) > .env.tmp && \
+            (test -f .env && grep -v '^UI_TAG=\|^API_TAG=\|^MOSQUITTO_TAG=\|^MMDVM_LINK_SERVER_TAG=\|^ENABLE_MMDVM_LINK=' .env || true) > .env.tmp && \
             echo 'UI_TAG=${{ steps.ui_tag.outputs.tag }}' >> .env.tmp && \
             echo 'API_TAG=${{ steps.api_tag.outputs.tag }}' >> .env.tmp && \
-            echo 'MOSQUITTO_TAG=${{ github.event.inputs.mosquitto_version }}' >> .env.tmp && \
+            echo 'MOSQUITTO_TAG='"$MOSQUITTO_TAG" >> .env.tmp && \
             echo 'MMDVM_LINK_SERVER_TAG=${{ steps.mmdvm_tag.outputs.tag }}' >> .env.tmp && \
-            echo 'GITHUB_OWNER=${{ github.repository_owner }}' >> .env.tmp && \
-            echo 'GITHUB_OWNER_LC='${OWNER_LC} >> .env.tmp && \
-            echo 'ENABLE_MMDVM_LINK=${{ github.event.inputs.enable_mmdvm_link }}' >> .env.tmp && \
+            echo 'ENABLE_MMDVM_LINK='"$ENABLE_MMDVM_LINK" >> .env.tmp && \
             mv .env.tmp .env"
 
       - name: Deploy (pull and restart)
         continue-on-error: true
         run: |
-          ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            "cd ${{ env.SERVER_DIR }} && export UI_TAG='${{ steps.ui_tag.outputs.tag }}' && export API_TAG='${{ steps.api_tag.outputs.tag }}' && export MOSQUITTO_TAG='${{ github.event.inputs.mosquitto_version }}' && export MMDVM_LINK_SERVER_TAG='${{ steps.mmdvm_tag.outputs.tag }}' && export GITHUB_OWNER='${{ github.repository_owner }}' && export GITHUB_OWNER_LC='$(echo \"${{ github.repository_owner }}\" | tr \"[:upper:]\" \"[:lower:]\")' && export ENABLE_MMDVM_LINK='${{ github.event.inputs.enable_mmdvm_link }}' && ./update.sh"
+          MOSQUITTO_TAG="${{ github.event.inputs.mosquitto_version }}"
+          ENABLE_MMDVM_LINK="${{ github.event.inputs.enable_mmdvm_link }}"
+          [ -z "$MOSQUITTO_TAG" ] && MOSQUITTO_TAG="2"
+          [ -z "$ENABLE_MMDVM_LINK" ] && ENABLE_MMDVM_LINK="true"
 
-      - name: Server diagnostics (on failure)
-        if: failure()
+          ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            "cd ${{ env.SERVER_DIR }} && export UI_TAG='${{ steps.ui_tag.outputs.tag }}' && export API_TAG='${{ steps.api_tag.outputs.tag }}' && export MOSQUITTO_TAG='$MOSQUITTO_TAG' && export MMDVM_LINK_SERVER_TAG='${{ steps.mmdvm_tag.outputs.tag }}' && export ENABLE_MMDVM_LINK='$ENABLE_MMDVM_LINK' && ./update.sh"
+
+      - name: Server diagnostics (always)
+        if: always()
         continue-on-error: true
         run: |
           echo "::group::docker ps -a"
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cd ${{ env.SERVER_DIR }} && docker ps -a" || true
           echo "::endgroup::"
-          echo "::group::docker compose logs (last 300 lines)"
+
+          echo "::group::docker compose ps"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cd ${{ env.SERVER_DIR }} && docker compose ps" || true
+          echo "::endgroup::"
+
+          echo "::group::mosquitto logs (last 400 lines)"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cd ${{ env.SERVER_DIR }} && docker compose logs mosquitto --tail=400" || true
+          echo "::endgroup::"
+
+          echo "::group::mmdvm-link-server logs (last 400 lines)"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cd ${{ env.SERVER_DIR }} && docker compose logs mmdvm-link-server --tail=400" || true
+          echo "::endgroup::"
+
+          echo "::group::docker compose logs (last 300 lines, all services)"
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cd ${{ env.SERVER_DIR }} && docker compose logs --tail=300" || true
           echo "::endgroup::"
