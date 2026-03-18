@@ -26,7 +26,7 @@ services:
 
   mmdvm-link-server:
     container_name: mmdvm-link-server
-    image: ghcr.io/${GITHUB_OWNER_LC:-trac-erzurum}/mmdvm-link-server:${MMDVM_LINK_SERVER_TAG:-latest}
+    image: ghcr.io/trac-erzurum/mmdvm-link-server:${MMDVM_LINK_SERVER_TAG:-latest}
     profiles: ["poc"]
     working_dir: /app/mmdvm-link/server
     entrypoint: ["/bin/sh", "-lc"]
