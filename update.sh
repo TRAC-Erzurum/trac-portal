@@ -43,7 +43,21 @@ docker image prune -f 2>/dev/null || true
 docker builder prune -f 2>/dev/null || true
 
 log "Yeni imajlar çekiliyor..."
-docker compose pull
+# Always update core services
+docker compose pull ui api
+
+# PoC services (must never break UI/API deploy)
+# Default: enabled. Set ENABLE_MMDVM_LINK=false to skip.
+ENABLE_MMDVM_LINK="${ENABLE_MMDVM_LINK:-true}"
+if [ "$ENABLE_MMDVM_LINK" = "1" ] || [ "$ENABLE_MMDVM_LINK" = "true" ]; then
+  log "mmdvm-link PoC: imajlar çekiliyor..."
+  docker compose --profile poc pull mosquitto mmdvm-link-server || warn "mmdvm-link PoC pull başarısız; UI/API deploy devam ediyor."
+
+  log "mmdvm-link PoC: Mosquitto başlatılıyor..."
+  docker compose --profile poc up -d mosquitto || warn "mmdvm-link PoC mosquitto up başarısız; UI/API deploy devam ediyor."
+else
+  warn "mmdvm-link PoC devre dışı (ENABLE_MMDVM_LINK=true ile açılır)."
+fi
 
 log "Servisler yeniden başlatılıyor..."
 # Force recreate only UI and API so they get fresh env (APP_VERSION, UI_VERSION); leave db/certbot as-is
