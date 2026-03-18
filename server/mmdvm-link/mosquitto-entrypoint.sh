@@ -38,6 +38,12 @@ if [ ! -f "$PASSWD_PATH" ]; then
   chmod 600 "$PASSWD_PATH" || true
 fi
 
+# Ensure Mosquitto can read/write mounted volumes.
+# Container is started as root (compose user: 0:0) so we can fix ownership here.
+chown -R mosquitto:mosquitto /mosquitto/config /mosquitto/data 2>/dev/null || true
+chmod 700 /mosquitto/config /mosquitto/data 2>/dev/null || true
+chmod 600 "$PASSWD_PATH" 2>/dev/null || true
+
 if [ ! -s "$ACL_PATH" ]; then
   cat >"$ACL_PATH" <<'EOF'
 pattern write nodes/telemetry/%u
@@ -55,19 +61,21 @@ per_listener_settings true
 # Internal listener (no auth/acl). Network-only; do NOT publish to host.
 listener 1883
 protocol mqtt
-allow_anonymous true
+listener_allow_anonymous true
 
 # External listener (TLS-only) published to host.
 listener 8883
 protocol mqtt
 
-allow_anonymous false
+listener_allow_anonymous false
 password_file /mosquitto/config/passwd
 acl_file /mosquitto/config/acl
 
 certfile $CERTFILE
 keyfile $KEYFILE
 require_certificate false
+
+user mosquitto
 
 persistence true
 persistence_location /mosquitto/data/
