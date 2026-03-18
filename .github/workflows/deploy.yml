@@ -201,6 +201,7 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "mkdir -p ${{ env.SERVER_DIR }}"
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new docker-compose.yml update.sh "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.SERVER_DIR }}/"
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new -r server/mmdvm-link "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.SERVER_DIR }}/server/"
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "chmod +x ${{ env.SERVER_DIR }}/update.sh"
 
       - name: Login to GHCR on server
@@ -212,19 +213,22 @@ jobs:
 
       - name: Write version and env on server
         run: |
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cd ${{ env.SERVER_DIR }} && \
             echo 'UI_VERSION=${{ steps.ui_tag.outputs.tag }}' > ${{ env.VERSIONS_FILE }} && \
             echo 'API_VERSION=${{ steps.api_tag.outputs.tag }}' >> ${{ env.VERSIONS_FILE }} && \
             echo 'MOSQUITTO_VERSION=${{ github.event.inputs.mosquitto_version }}' >> ${{ env.VERSIONS_FILE }} && \
             echo 'MMDVM_LINK_SERVER_VERSION=${{ steps.mmdvm_tag.outputs.tag }}' >> ${{ env.VERSIONS_FILE }} && \
-            echo 'GITHUB_OWNER=${{ github.repository_owner }}' >> ${{ env.VERSIONS_FILE }}"
+            echo 'GITHUB_OWNER=${{ github.repository_owner }}' >> ${{ env.VERSIONS_FILE }} && \
+            echo 'GITHUB_OWNER_LC='${OWNER_LC} >> ${{ env.VERSIONS_FILE }}"
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cd ${{ env.SERVER_DIR }} && \
-            (test -f .env && grep -v '^UI_TAG=\|^API_TAG=\|^MOSQUITTO_TAG=\|^MMDVM_LINK_SERVER_TAG=\|^GITHUB_OWNER=\|^ENABLE_MMDVM_LINK=' .env || true) > .env.tmp && \
+            (test -f .env && grep -v '^UI_TAG=\|^API_TAG=\|^MOSQUITTO_TAG=\|^MMDVM_LINK_SERVER_TAG=\|^GITHUB_OWNER=\|^GITHUB_OWNER_LC=\|^ENABLE_MMDVM_LINK=' .env || true) > .env.tmp && \
             echo 'UI_TAG=${{ steps.ui_tag.outputs.tag }}' >> .env.tmp && \
             echo 'API_TAG=${{ steps.api_tag.outputs.tag }}' >> .env.tmp && \
             echo 'MOSQUITTO_TAG=${{ github.event.inputs.mosquitto_version }}' >> .env.tmp && \
             echo 'MMDVM_LINK_SERVER_TAG=${{ steps.mmdvm_tag.outputs.tag }}' >> .env.tmp && \
             echo 'GITHUB_OWNER=${{ github.repository_owner }}' >> .env.tmp && \
+            echo 'GITHUB_OWNER_LC='${OWNER_LC} >> .env.tmp && \
             echo 'ENABLE_MMDVM_LINK=${{ github.event.inputs.enable_mmdvm_link }}' >> .env.tmp && \
             mv .env.tmp .env"
 
@@ -232,7 +236,7 @@ jobs:
         continue-on-error: true
         run: |
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            "cd ${{ env.SERVER_DIR }} && export UI_TAG='${{ steps.ui_tag.outputs.tag }}' && export API_TAG='${{ steps.api_tag.outputs.tag }}' && export MOSQUITTO_TAG='${{ github.event.inputs.mosquitto_version }}' && export MMDVM_LINK_SERVER_TAG='${{ steps.mmdvm_tag.outputs.tag }}' && export GITHUB_OWNER='${{ github.repository_owner }}' && export ENABLE_MMDVM_LINK='${{ github.event.inputs.enable_mmdvm_link }}' && ./update.sh"
+            "cd ${{ env.SERVER_DIR }} && export UI_TAG='${{ steps.ui_tag.outputs.tag }}' && export API_TAG='${{ steps.api_tag.outputs.tag }}' && export MOSQUITTO_TAG='${{ github.event.inputs.mosquitto_version }}' && export MMDVM_LINK_SERVER_TAG='${{ steps.mmdvm_tag.outputs.tag }}' && export GITHUB_OWNER='${{ github.repository_owner }}' && export GITHUB_OWNER_LC='$(echo \"${{ github.repository_owner }}\" | tr \"[:upper:]\" \"[:lower:]\")' && export ENABLE_MMDVM_LINK='${{ github.event.inputs.enable_mmdvm_link }}' && ./update.sh"
 
       - name: Server diagnostics (on failure)
         if: failure()
