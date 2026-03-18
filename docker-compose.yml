@@ -17,7 +17,7 @@ services:
       - ./volumes/mmdvm-mqtt:/mosquitto/config
       # Persistence volume (rw) kept separate to avoid overlapping mounts
       - ./volumes/mmdvm-mqtt-data:/mosquitto/data
-      - ./mmdvm-link/docker:/init:ro
+      - ./server/mmdvm-link:/init:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
     networks:
       - trac-network
@@ -25,7 +25,7 @@ services:
 
   mmdvm-link-server:
     container_name: mmdvm-link-server
-    image: ghcr.io/${GITHUB_OWNER:-trac-erzurum}/mmdvm-link-server:${MMDVM_LINK_SERVER_TAG:-latest}
+    image: ghcr.io/${GITHUB_OWNER_LC:-trac-erzurum}/mmdvm-link-server:${MMDVM_LINK_SERVER_TAG:-latest}
     profiles: ["poc"]
     working_dir: /app/mmdvm-link/server
     entrypoint: ["/bin/sh", "-lc"]
