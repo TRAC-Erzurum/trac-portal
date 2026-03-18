@@ -1,6 +1,56 @@
 name: trac-portal
 
 services:
+  mosquitto:
+    container_name: mmdvm-mosquitto
+    image: eclipse-mosquitto:${MOSQUITTO_TAG:-2}
+    profiles: ["poc"]
+    ports:
+      - "${MOSQUITTO_TLS_PORT:-8883}:8883"
+    entrypoint: ["/bin/sh", "/init/mosquitto-entrypoint.sh"]
+    environment:
+      - DOMAIN=${DOMAIN}
+      - MQTT_TLS_DOMAIN=${MQTT_TLS_DOMAIN:-${DOMAIN}}
+      - LE_LIVE_DIR=/etc/letsencrypt/live
+    volumes:
+      # Shared config volume (rw): mosquitto.conf, acl, passwd live here
+      - ./volumes/mmdvm-mqtt:/mosquitto/config
+      # Persistence volume (rw) kept separate to avoid overlapping mounts
+      - ./volumes/mmdvm-mqtt-data:/mosquitto/data
+      - ./mmdvm-link/docker:/init:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    networks:
+      - trac-network
+    restart: unless-stopped
+
+  mmdvm-link-server:
+    container_name: mmdvm-link-server
+    image: ghcr.io/${GITHUB_OWNER:-trac-erzurum}/mmdvm-link-server:${MMDVM_LINK_SERVER_TAG:-latest}
+    profiles: ["poc"]
+    working_dir: /app/mmdvm-link/server
+    entrypoint: ["/bin/sh", "-lc"]
+    command: >
+      set -euo pipefail;
+      export MQTT_BROKER="mosquitto";
+      export MQTT_PORT="1883";
+      export SERVER_ADDR="${MMDVM_LINK_SERVER_ADDR:-${DOMAIN}:8883}";
+      exec python -u server_proto.py
+    environment:
+      - DOMAIN=${DOMAIN}
+      - MMDVM_LINK_SERVER_ADDR=${MMDVM_LINK_SERVER_ADDR:-}
+      - MQTT_TLS=0
+      # Must match Mosquitto's live password file path
+      - BROKER_PASSWORD_FILE=/mosquitto/config/passwd
+    depends_on:
+      mosquitto:
+        condition: service_started
+    volumes:
+      # Needs write access to BROKER_PASSWORD_FILE for installer generation (mosquitto_passwd)
+      - ./volumes/mmdvm-mqtt:/mosquitto/config
+    networks:
+      - trac-network
+    restart: unless-stopped
+
   ui:
     container_name: trac-portal-ui
     image: ghcr.io/trac-erzurum/trac-portal-ui:${UI_TAG:-${TAG:-latest}}

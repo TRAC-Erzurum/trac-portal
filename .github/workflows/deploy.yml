@@ -14,6 +14,18 @@ on:
         description: 'API image tag (default latest, or e.g. v1.2.3)'
         required: false
         default: 'latest'
+      mosquitto_version:
+        description: 'Mosquitto image tag (default 2 or pin e.g. 2.0.18)'
+        required: false
+        default: '2'
+      mmdvm_link_server_version:
+        description: 'mmdvm-link-server image tag (default latest or pin e.g. v0.1.0)'
+        required: false
+        default: 'latest'
+      enable_mmdvm_link:
+        description: 'Enable mmdvm-link PoC services (true/false)'
+        required: false
+        default: 'true'
       force_deploy:
         description: 'Skip downgrade check (true/false)'
         required: false
@@ -26,6 +38,7 @@ env:
   VERSIONS_FILE: .versions
   UI_REPO: ${{ github.repository_owner }}/trac-portal-ui
   API_REPO: ${{ github.repository_owner }}/trac-portal-api
+  MMDVM_REPO: ${{ github.repository_owner }}/mmdvm-link
 
 jobs:
   deploy:
@@ -104,6 +117,35 @@ jobs:
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
+      - name: Resolve or validate mmdvm-link-server tag
+        id: mmdvm_tag
+        env:
+          MMDVM_REPO: ${{ env.MMDVM_REPO }}
+          GH_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+        run: |
+          WANTED="${{ github.event.inputs.mmdvm_link_server_version }}"
+          REPO="${MMDVM_REPO}"
+          if [ -z "$WANTED" ] || [ "$WANTED" = "latest" ]; then
+            # Prefer latest release tag if present, otherwise fall back to most recent v* tag.
+            TAG=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} "https://api.github.com/repos/${REPO}/releases/latest" | jq -r '.tag_name // empty')
+            if [ -z "$TAG" ]; then
+              TAGS_JSON=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} "https://api.github.com/repos/${REPO}/tags?per_page=100")
+              TAG=$(echo "$TAGS_JSON" | jq -r 'if type == "array" then (map(.name) | map(select(startswith("v"))) | .[0] // empty) else empty end')
+            fi
+            if [ -z "$TAG" ]; then
+              echo "::error::No release or v* tag in ${REPO}. Create a v* tag first (e.g. v0.1.0)."
+              exit 1
+            fi
+          else
+            TAG="$WANTED"
+            HTTP=$(curl -sS ${GH_TOKEN:+-H "Authorization: Bearer $GH_TOKEN"} -o /dev/null -w "%{http_code}" "https://api.github.com/repos/${REPO}/git/ref/tags/${TAG}")
+            if [ "$HTTP" != "200" ]; then
+              echo "::error::mmdvm-link-server tag '${TAG}' does not exist in ${REPO}. Check releases/tags."
+              exit 1
+            fi
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
@@ -172,18 +214,25 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cd ${{ env.SERVER_DIR }} && \
             echo 'UI_VERSION=${{ steps.ui_tag.outputs.tag }}' > ${{ env.VERSIONS_FILE }} && \
-            echo 'API_VERSION=${{ steps.api_tag.outputs.tag }}' >> ${{ env.VERSIONS_FILE }}"
+            echo 'API_VERSION=${{ steps.api_tag.outputs.tag }}' >> ${{ env.VERSIONS_FILE }} && \
+            echo 'MOSQUITTO_VERSION=${{ github.event.inputs.mosquitto_version }}' >> ${{ env.VERSIONS_FILE }} && \
+            echo 'MMDVM_LINK_SERVER_VERSION=${{ steps.mmdvm_tag.outputs.tag }}' >> ${{ env.VERSIONS_FILE }} && \
+            echo 'GITHUB_OWNER=${{ github.repository_owner }}' >> ${{ env.VERSIONS_FILE }}"
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" "cd ${{ env.SERVER_DIR }} && \
-            (test -f .env && grep -v '^UI_TAG=\|^API_TAG=' .env || true) > .env.tmp && \
+            (test -f .env && grep -v '^UI_TAG=\|^API_TAG=\|^MOSQUITTO_TAG=\|^MMDVM_LINK_SERVER_TAG=\|^GITHUB_OWNER=\|^ENABLE_MMDVM_LINK=' .env || true) > .env.tmp && \
             echo 'UI_TAG=${{ steps.ui_tag.outputs.tag }}' >> .env.tmp && \
             echo 'API_TAG=${{ steps.api_tag.outputs.tag }}' >> .env.tmp && \
+            echo 'MOSQUITTO_TAG=${{ github.event.inputs.mosquitto_version }}' >> .env.tmp && \
+            echo 'MMDVM_LINK_SERVER_TAG=${{ steps.mmdvm_tag.outputs.tag }}' >> .env.tmp && \
+            echo 'GITHUB_OWNER=${{ github.repository_owner }}' >> .env.tmp && \
+            echo 'ENABLE_MMDVM_LINK=${{ github.event.inputs.enable_mmdvm_link }}' >> .env.tmp && \
             mv .env.tmp .env"
 
       - name: Deploy (pull and restart)
         continue-on-error: true
         run: |
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            "cd ${{ env.SERVER_DIR }} && export UI_TAG='${{ steps.ui_tag.outputs.tag }}' && export API_TAG='${{ steps.api_tag.outputs.tag }}' && ./update.sh"
+            "cd ${{ env.SERVER_DIR }} && export UI_TAG='${{ steps.ui_tag.outputs.tag }}' && export API_TAG='${{ steps.api_tag.outputs.tag }}' && export MOSQUITTO_TAG='${{ github.event.inputs.mosquitto_version }}' && export MMDVM_LINK_SERVER_TAG='${{ steps.mmdvm_tag.outputs.tag }}' && export GITHUB_OWNER='${{ github.repository_owner }}' && export ENABLE_MMDVM_LINK='${{ github.event.inputs.enable_mmdvm_link }}' && ./update.sh"
 
       - name: Server diagnostics (on failure)
         if: failure()
