@@ -38,8 +38,9 @@ if [ ! -f "$PASSWD_PATH" ]; then
   chmod 600 "$PASSWD_PATH" || true
 fi
 
-# Ensure Mosquitto can read/write mounted volumes.
-# Container is started as root (compose user: 0:0) so we can fix ownership here.
+# Ensure Mosquitto can read/write its own state on the mounted volumes.
+# TLS certs under /etc/letsencrypt remain root-owned; mosquitto process will run as root
+# (container user 0:0, no "user" directive in config) so it can read them.
 chown -R mosquitto:mosquitto /mosquitto/config /mosquitto/data 2>/dev/null || true
 chmod 700 /mosquitto/config /mosquitto/data 2>/dev/null || true
 chmod 600 "$PASSWD_PATH" 2>/dev/null || true
@@ -74,8 +75,6 @@ acl_file /mosquitto/config/acl
 certfile $CERTFILE
 keyfile $KEYFILE
 require_certificate false
-
-user mosquitto
 
 persistence true
 persistence_location /mosquitto/data/
