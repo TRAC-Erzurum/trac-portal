@@ -5,6 +5,7 @@ services:
     container_name: mmdvm-mosquitto
     image: eclipse-mosquitto:${MOSQUITTO_TAG:-2}
     profiles: ["poc"]
+    user: "0:0"
     ports:
       - "${MOSQUITTO_TLS_PORT:-8883}:8883"
     entrypoint: ["/bin/sh", "/init/mosquitto-entrypoint.sh"]
