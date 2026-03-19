@@ -14,7 +14,6 @@ services:
       - ./volumes/mmdvm-mqtt:/mosquitto/config
       - ./volumes/mmdvm-mqtt-data:/mosquitto/data
       - ./server/mmdvm-link:/init:ro
-      # Shared TLS store (provisioned by update.sh; GID 1000 can read key)
       - ./volumes/tls-certs:/etc/tls:ro
     networks:
       - trac-network
@@ -34,6 +33,8 @@ services:
       - MQTT_BROKER=mosquitto
       - MQTT_PORT=1883
       - MQTT_TLS=0
+      - MQTT_USER=${MMDVM_MQTT_USER:-server}
+      - MQTT_PASSWORD=${MMDVM_MQTT_PASSWORD:-server}
       - SERVER_ADDR=${MMDVM_LINK_SERVER_ADDR:-${DOMAIN}:8883}
       - BROKER_PASSWORD_FILE=/mosquitto/config/passwd
     depends_on:
