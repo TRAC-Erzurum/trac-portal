@@ -1,8 +1,9 @@
 #!/bin/sh
 set -eu
 
-# Mosquitto bootstrap: uses shared TLS store at /etc/tls (provisioned by update.sh).
-# Container runs as root (user 0:0) so it can read key with chmod 640 root:1000.
+# Mosquitto bootstrap: shared TLS store at /etc/tls is OPTIONAL.
+# - If /etc/tls/fullchain.pem + /etc/tls/privkey.pem exist: enable TLS listener 8883.
+# - Otherwise: run plaintext listener 1883 only (PoC still works).
 
 CONF_PATH="/mosquitto/config/mosquitto.conf"
 ACL_PATH="/mosquitto/config/acl"
@@ -14,10 +15,12 @@ umask 077
 
 mkdir -p /mosquitto/config /mosquitto/data
 
-if [ ! -f "$CERTFILE" ] || [ ! -f "$KEYFILE" ]; then
-  echo "ERROR: Shared TLS store missing. Run update.sh to provision ./volumes/tls-certs." >&2
-  echo "Expected: $CERTFILE and $KEYFILE" >&2
-  exit 1
+HAVE_TLS=0
+if [ -f "$CERTFILE" ] && [ -f "$KEYFILE" ]; then
+  HAVE_TLS=1
+else
+  echo "WARN: Shared TLS store missing. TLS listener 8883 will be disabled." >&2
+  echo "Expected (optional): $CERTFILE and $KEYFILE" >&2
 fi
 
 if [ ! -f "$PASSWD_PATH" ]; then
@@ -32,7 +35,8 @@ pattern read nodes/cmd/%u
 pattern read nodes/register/ack/%u
 ACLEOF
 
-cat >"$CONF_PATH" <<CONFEOF
+if [ "$HAVE_TLS" = "1" ]; then
+  cat >"$CONF_PATH" <<CONFEOF
 per_listener_settings true
 
 listener 1883
@@ -54,6 +58,21 @@ autosave_interval 60
 
 log_dest stdout
 CONFEOF
+else
+  cat >"$CONF_PATH" <<CONFEOF
+per_listener_settings true
+
+listener 1883
+protocol mqtt
+listener_allow_anonymous true
+
+persistence true
+persistence_location /mosquitto/data/
+autosave_interval 60
+
+log_dest stdout
+CONFEOF
+fi
 
 chown -R mosquitto:mosquitto /mosquitto/config /mosquitto/data 2>/dev/null || true
 chmod 755 /mosquitto/config /mosquitto/data
