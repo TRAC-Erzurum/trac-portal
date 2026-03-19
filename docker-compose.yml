@@ -20,23 +20,21 @@ services:
       - trac-network
     restart: unless-stopped
 
+  # PoC: container stays up so you can exec in and run CLI / server_proto.py manually.
+  # Example: docker exec -it mmdvm-link-server sh -c "python -u server_proto.py"
   mmdvm-link-server:
     container_name: mmdvm-link-server
     image: ghcr.io/trac-erzurum/mmdvm-link-server:${MMDVM_LINK_SERVER_TAG:-latest}
     profiles: ["poc"]
-    working_dir: /app/mmdvm-link/server
-    entrypoint: ["/bin/sh", "-lc"]
-    command: >
-      set -euo pipefail;
-      export MQTT_BROKER="mosquitto";
-      export MQTT_PORT="1883";
-      export SERVER_ADDR="${MMDVM_LINK_SERVER_ADDR:-${DOMAIN}:8883}";
-      exec python -u server_proto.py
+    working_dir: /app/server
+    command: ["sleep", "infinity"]
     environment:
       - DOMAIN=${DOMAIN}
       - MMDVM_LINK_SERVER_ADDR=${MMDVM_LINK_SERVER_ADDR:-}
+      - MQTT_BROKER=mosquitto
+      - MQTT_PORT=1883
       - MQTT_TLS=0
-      # Must match Mosquitto's live password file path
+      - SERVER_ADDR=${MMDVM_LINK_SERVER_ADDR:-${DOMAIN}:8883}
       - BROKER_PASSWORD_FILE=/mosquitto/config/passwd
     depends_on:
       mosquitto:
