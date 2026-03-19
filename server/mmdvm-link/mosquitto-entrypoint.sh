@@ -2,16 +2,13 @@
 set -eu
 
 # Mosquitto bootstrap: uses shared TLS store at /etc/tls (provisioned by update.sh).
-# Runs as UID/GID 1000 so it can read the key (group 1000). No per-service cert copy.
+# Container runs as root (user 0:0) so it can read key with chmod 640 root:1000.
 
 CONF_PATH="/mosquitto/config/mosquitto.conf"
 ACL_PATH="/mosquitto/config/acl"
 PASSWD_PATH="/mosquitto/config/passwd"
-# Shared store: fullchain.pem and privkey.pem, readable by GID 1000
 CERTFILE="/etc/tls/fullchain.pem"
 KEYFILE="/etc/tls/privkey.pem"
-TLS_UID="${TLS_CERTS_UID:-1000}"
-TLS_GID="${TLS_CERTS_GID:-1000}"
 
 umask 077
 
@@ -58,13 +55,9 @@ autosave_interval 60
 log_dest stdout
 CONFEOF
 
-chown -R "${TLS_UID}:${TLS_GID}" /mosquitto/config /mosquitto/data
+chown -R mosquitto:mosquitto /mosquitto/config /mosquitto/data 2>/dev/null || true
 chmod 755 /mosquitto/config /mosquitto/data
 chmod 600 "$PASSWD_PATH"
 chmod 644 "$ACL_PATH" "$CONF_PATH"
 
-# Drop to TLS_UID:TLS_GID so process can read shared cert store (key is chmod 640, group TLS_GID)
-if command -v runuser >/dev/null 2>&1; then
-  exec runuser -u "$TLS_UID" -g "$TLS_GID" -- mosquitto -c "$CONF_PATH"
-fi
-exec su "$TLS_UID" -s /bin/sh -c "exec mosquitto -c $CONF_PATH"
+exec mosquitto -c "$CONF_PATH"

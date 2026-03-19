@@ -11,12 +11,21 @@ warn() { echo -e "${YELLOW}[$(date '+%H:%M:%S')]${NC} $1"; }
 
 # Expect to be run from same directory as docker-compose.yml (e.g. /opt/trac)
 
-# Load .env so DOMAIN (and TLS cert path) is available for shared cert store
+# Load .env so DOMAIN is available for shared TLS cert store
 if [ -f .env ]; then
   set -a
   # shellcheck source=/dev/null
   source ./.env 2>/dev/null || true
   set +a
+fi
+# If DOMAIN still unset, use first LetsEncrypt live dir (same cert UI uses)
+if [ -z "${DOMAIN:-}" ] && [ -d /etc/letsencrypt/live ]; then
+  for d in /etc/letsencrypt/live/*/; do
+    if [ -f "${d}fullchain.pem" ] && [ -f "${d}privkey.pem" ]; then
+      DOMAIN=$(basename "$d")
+      break
+    fi
+  done
 fi
 
 # Use last-deployed tags from .versions when not set (e.g. manual run or after reboot)
@@ -50,20 +59,33 @@ log "Ön temizlik..."
 docker image prune -f 2>/dev/null || true
 docker builder prune -f 2>/dev/null || true
 
-# Shared TLS cert store: any service that needs TLS mounts ./volumes/tls-certs and runs as GID 1000
+# Shared TLS cert store: any service that needs TLS mounts ./volumes/tls-certs (container runs as root to read key)
 TLS_STORE="${TLS_CERTS_DIR:-./volumes/tls-certs}"
 TLS_GID="${TLS_CERTS_GID:-1000}"
+TLS_SOURCE_DIR=""
 if [ -n "${DOMAIN:-}" ] && [ -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ] && [ -f "/etc/letsencrypt/live/${DOMAIN}/privkey.pem" ]; then
+  TLS_SOURCE_DIR="/etc/letsencrypt/live/${DOMAIN}"
+fi
+if [ -z "$TLS_SOURCE_DIR" ] && [ -d /etc/letsencrypt/live ]; then
+  for d in /etc/letsencrypt/live/*/; do
+    [ ! -d "$d" ] && continue
+    if [ -f "${d}fullchain.pem" ] && [ -f "${d}privkey.pem" ]; then
+      TLS_SOURCE_DIR="$d"
+      break
+    fi
+  done
+fi
+if [ -n "$TLS_SOURCE_DIR" ]; then
+  TLS_SOURCE_DIR="${TLS_SOURCE_DIR%/}"
   log "TLS sertifika deposu güncelleniyor ($TLS_STORE)..."
   mkdir -p "$TLS_STORE"
-  cp -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" "$TLS_STORE/fullchain.pem"
-  cp -f "/etc/letsencrypt/live/${DOMAIN}/privkey.pem" "$TLS_STORE/privkey.pem"
+  cp -f "$TLS_SOURCE_DIR/fullchain.pem" "$TLS_STORE/fullchain.pem"
+  cp -f "$TLS_SOURCE_DIR/privkey.pem" "$TLS_STORE/privkey.pem"
   chown -R "root:${TLS_GID}" "$TLS_STORE"
   chmod 644 "$TLS_STORE/fullchain.pem"
   chmod 640 "$TLS_STORE/privkey.pem"
 else
-  [ -z "${DOMAIN:-}" ] && warn "DOMAIN boş; TLS deposu atlanıyor." || true
-  [ -n "${DOMAIN:-}" ] && [ ! -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ] && warn "LetsEncrypt sertifikası yok; TLS deposu atlanıyor." || true
+  warn "LetsEncrypt sertifikası bulunamadı; TLS deposu atlanıyor (DOMAIN set veya /etc/letsencrypt/live altında fullchain+privkey gerekir)."
 fi
 
 log "Yeni imajlar çekiliyor..."
@@ -77,8 +99,8 @@ if [ "$ENABLE_MMDVM_LINK" = "1" ] || [ "$ENABLE_MMDVM_LINK" = "true" ]; then
   log "mmdvm-link PoC: imajlar çekiliyor..."
   docker compose --profile poc pull mosquitto mmdvm-link-server || warn "mmdvm-link PoC pull başarısız; UI/API deploy devam ediyor."
 
-  log "mmdvm-link PoC: Mosquitto başlatılıyor..."
-  docker compose --profile poc up -d mosquitto || warn "mmdvm-link PoC mosquitto up başarısız; UI/API deploy devam ediyor."
+  log "mmdvm-link PoC: Mosquitto ve mmdvm-link-server başlatılıyor..."
+  docker compose --profile poc up -d mosquitto mmdvm-link-server || warn "mmdvm-link PoC up başarısız; UI/API deploy devam ediyor."
 else
   warn "mmdvm-link PoC devre dışı (ENABLE_MMDVM_LINK=true ile açılır)."
 fi
