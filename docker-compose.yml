@@ -14,7 +14,6 @@ services:
       - ./volumes/mmdvm-mqtt:/mosquitto/config
       - ./volumes/mmdvm-mqtt-data:/mosquitto/data
       - ./server/mmdvm-link:/init:ro
-      # Shared TLS store (provisioned by update.sh; GID 1000 can read key)
       - ./volumes/tls-certs:/etc/tls:ro
     networks:
       - trac-network
