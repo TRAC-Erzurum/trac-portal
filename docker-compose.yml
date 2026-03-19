@@ -9,9 +9,6 @@ services:
     ports:
       - "${MOSQUITTO_TLS_PORT:-8883}:8883"
     entrypoint: ["/bin/sh", "/init/mosquitto-entrypoint.sh"]
-    environment:
-      - DOMAIN=${DOMAIN}
-      - MQTT_TLS_DOMAIN=${MQTT_TLS_DOMAIN:-${DOMAIN}}
     volumes:
       - ./volumes/mmdvm-mqtt:/mosquitto/config
       - ./volumes/mmdvm-mqtt-data:/mosquitto/data
