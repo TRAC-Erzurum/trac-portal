@@ -7,6 +7,7 @@ services:
     profiles: ["poc"]
     user: "0:0"
     ports:
+      - "${MOSQUITTO_PORT:-1883}:1883"
       - "${MOSQUITTO_TLS_PORT:-8883}:8883"
     entrypoint: ["/bin/sh", "/init/mosquitto-entrypoint.sh"]
     volumes:
