@@ -106,6 +106,8 @@ services:
       - R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID}
       - R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}
       - R2_BUCKET_NAME=${R2_BUCKET_NAME}
+      - GITHUB_FEEDBACK_TOKEN=${GITHUB_FEEDBACK_TOKEN:-}
+      - GITHUB_REPO_WEB_URL=${GITHUB_REPO_WEB_URL:-}
     volumes:
       - ./volumes/uploads:/app/uploads
       - ./volumes/backups:/app/backup
