@@ -7,6 +7,9 @@ services:
 
     environment:
       # General
+      APP_VERSION: ${API_TAG}
+      UI_VERSION: ${UI_TAG}
+      DOMAIN: ${DOMAIN}
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-8000}
 
