@@ -4,8 +4,6 @@ services:
     container_name: trac-portal-api
     image: ghcr.io/trac-erzurum/trac-portal-api:${API_TAG}
     restart: unless-stopped
-    env_file:
-      - /opt/stacks/trac-portal/.env
 
     environment:
       APP_VERSION: ${API_TAG}
