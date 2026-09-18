@@ -94,7 +94,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=edge"
-      - "traefik.http.routers.trac.rule=Host(`${DOMAIN}`) || Host(`${TEST_DOMAIN}`)"
+      - "traefik.http.routers.trac.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.trac.entrypoints=websecure"
       - "traefik.http.services.trac.loadbalancer.server.port=80"
 
