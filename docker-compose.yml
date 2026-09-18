@@ -20,6 +20,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
       SESSION_SECRET: ${SESSION_SECRET}
+      COOKIE_SECRET: ${COOKIE_SECRET}
 
     volumes:
       - /opt/stacks/trac-portal/volumes/uploads:/app/uploads
