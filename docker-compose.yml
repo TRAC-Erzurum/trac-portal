@@ -32,6 +32,10 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
 
+      # OpenID Connect provider (issuer: <origin>/api/oidc). The UI and API share
+      # the DOMAIN origin behind Traefik, which the consent page relies on.
+      PUBLIC_API_ORIGIN: https://${DOMAIN}
+
       # Cloudflare R2 Storage
       R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
       R2_BUCKET_NAME: ${R2_BUCKET_NAME}

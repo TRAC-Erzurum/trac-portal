@@ -73,6 +73,7 @@ Kökte `.env.example` → `.env` kopyalayın. Örnek değişkenler:
 | `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME` | PostgreSQL (docker-compose’da `DB_USER` da kullanılır) |
 | `JWT_SECRET`, `COOKIE_SECRET`, `SESSION_SECRET`, `JWT_EXPIRES_IN` | Oturum ve güvenlik |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL` | Google OAuth |
+| `PUBLIC_API_ORIGIN` | OIDC sağlayıcısının dış adresi (issuer: `<origin>/api/oidc`); docker-compose’da `https://${DOMAIN}` olarak türetilir |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile (CAPTCHA) |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` | Cloudflare R2 (yüklemeler) |
 | `DOMAIN` | Production domain (deploy için) |
