@@ -5,6 +5,14 @@ services:
     image: ghcr.io/trac-erzurum/trac-portal-api:${API_TAG}
     restart: unless-stopped
 
+    # Observation sharing posts to the Afet Haberleşme Portalı, which runs on
+    # this same host behind the same Traefik. Going out through Cloudflare,
+    # its bot challenge answers the server's own requests with 403; resolving
+    # the name to the host sends them straight to Traefik instead. TLS stays
+    # valid (Traefik holds the same certificate) and nothing else changes.
+    extra_hosts:
+      - "afet.yerlisu.com:host-gateway"
+
     environment:
       # General
       APP_VERSION: ${API_TAG}
