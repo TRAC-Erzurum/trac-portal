@@ -2,20 +2,23 @@
 
 Bu sayfa projeye **kod veya teknik katkı** sunacaklar içindir. Genel bilgi ve kullanıcı geri bildirimi [README](../README.md)’de; yalnızca hata/öneri iletmek isteyenler README’deki **“Geri bildirim / hata bildirimi”** bölümüne ve [trac-portal — Issues](https://github.com/TRAC-Erzurum/trac-portal/issues) sayfasına baksın.
 
-**Kısa özet:** Issue’lar yalnızca **ana repoda** (trac-portal). PR’lar değişikliğin olduğu repoya açılır: UI → trac-portal-ui, API → trac-portal-api; hedef branch **main** (koruma altında, doğrudan push yok). Deploy: PR merge sonrası ürün sahipleri son testi yapar ve deployment’ı manuel başlatır; geliştirici deploy tetiklemez.
+**Kısa özet:** Issue’lar yalnızca **ana repoda** (trac-portal). PR’lar değişikliğin olduğu repoya açılır: UI → trac-portal-ui, API → trac-portal-api; hedef branch **main** (koruma altında, doğrudan push yok). Deploy: PR merge sonrası ürün sahipleri son testi yapar ve canlıya alma işlemini manuel olarak yapar; geliştirici deploy tetiklemez.
 
 ---
 
 ## Proje yapısı
 
-Ana repo (**trac-portal**) iki git submodule içerir; her biri ayrı GitHub repo’sudur. Kurulum ve komutlar ilgili proje README’sinde:
+Ana repo (**trac-portal**) üç git submodule içerir; her biri ayrı GitHub repo’sudur. Kurulum ve komutlar ilgili proje README’sinde:
 
 | Proje | GitHub repo | README (ana repoda) |
 |-------|-------------|---------------------|
 | Backend (NestJS, PostgreSQL) | [TRAC-Erzurum/trac-portal-api](https://github.com/TRAC-Erzurum/trac-portal-api) | [trac-portal-api/README.md](../trac-portal-api/README.md) |
 | Frontend (Vue 3, Vite) | [TRAC-Erzurum/trac-portal-ui](https://github.com/TRAC-Erzurum/trac-portal-ui) | [trac-portal-ui/README.md](../trac-portal-ui/README.md) |
+| Çevre bağlantısı (MMDVM, Python) | [TRAC-Erzurum/mmdvm-link](https://github.com/TRAC-Erzurum/mmdvm-link) | [mmdvm-link/README.md](../mmdvm-link/README.md) |
 
 Submodule’leri henüz klonlamadıysanız: `git submodule update --init --recursive`.
+
+Her submodule’ün kendi `AGENTS.md` dosyası ve (varsa) `docs/conventions/` klasörü, o projenin kod kurallarını ve doğrulama komutunu (`verify`) içerir. Katkıdan önce ilgili olanı okuyun.
 
 ---
 
@@ -34,10 +37,10 @@ Submodule’leri henüz klonlamadıysanız: `git submodule update --init --recur
 
 4. **PR kuralları:**  
    - UI değişikliklerinde PR açıklamasında **ekran görüntüsü** zorunlu.  
-   - Tasarım proje diline uymalı; ana repodaki [.cursor/rules](../.cursor/rules) (design-system, component-patterns) kontrol edin.
+   - Tasarım proje diline uymalı; trac-portal-ui’nin `AGENTS.md` ve `docs/conventions/` dosyalarındaki kurallara bakın.
 
 5. **Deploy nasıl olur?**  
-   PR merge edildikten sonra trac-portal-ui’de CI imajı build edilir. **Canlıya alma (deployment) ürün sahipleri tarafından yapılır:** merge sonrası ürün sahipleri son kez test eder, ardından ana repodaki deploy workflow’unu manuel başlatır. Geliştirici deploy tetiklemez.
+   PR merge edildikten sonra trac-portal-ui’de CI imajı build edilir. **Canlıya alma (deployment) ürün sahipleri tarafından yapılır:** merge sonrası ürün sahipleri son kez test eder ve ardından canlıya alma işlemini manuel olarak başlatır. Geliştirici deploy tetiklemez.
 
 ---
 
@@ -55,64 +58,52 @@ Submodule’leri henüz klonlamadıysanız: `git submodule update --init --recur
    trac-portal-api’yi fork’layın → kendi fork’unuzda branch açın → değişikliği yapın → [TRAC-Erzurum/trac-portal-api](https://github.com/TRAC-Erzurum/trac-portal-api) içinde **main**’e Pull Request açın.
 
 4. **PR kuralları:**  
-   - Tasarım/API kurallarına uyun; gerekirse ana repodaki [.cursor/rules](../.cursor/rules) (backend-structure, api-patterns vb.)’e bakın.
+   - API kurallarına uyun; trac-portal-api’nin `AGENTS.md` ve `docs/conventions/` dosyalarına bakın.
 
 5. **Deploy nasıl olur?**  
-   PR merge edildikten sonra trac-portal-api’de CI imajı build edilir. **Canlıya alma ürün sahipleri tarafından yapılır:** merge sonrası ürün sahipleri son kez test eder, ardından ana repodaki deploy workflow’unu manuel başlatır. Geliştirici deploy tetiklemez.
+   PR merge edildikten sonra trac-portal-api’de CI imajı build edilir. **Canlıya alma ürün sahipleri tarafından yapılır:** merge sonrası ürün sahipleri son kez test eder ve ardından canlıya alma işlemini manuel olarak başlatır. Geliştirici deploy tetiklemez.
+
+---
+
+## Agent ile geliştirme
+
+Projede yapay zeka ajanlarıyla (Claude Code, Copilot, Cursor vb.) çalışmak isteyenler için kurallar ana repodaki [AGENTS.md](../AGENTS.md) dosyasında toplanmıştır. Agent dokümanları araçtan bağımsız düz Markdown’dır; hangi aracı kullandığınız fark etmez. Her submodule’ün kendi `AGENTS.md` dosyası, o projenin kurallarını ve `verify` komutunu tanımlar.
 
 ---
 
 ## Ortam değişkenleri (ana repo)
 
-Kökte `.env.example` → `.env` kopyalayın. Örnek değişkenler:
+Kökte `.env.example` → `.env` kopyalayın. Değişkenlerin tam listesi ve anlamları:
 
 | Değişken | Açıklama |
 |----------|----------|
-| `PORT` | UI portu (örn. 80) |
-| `API_BASE_URL`, `FRONTEND_URL` | API ve frontend URL’leri |
-| `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME` | PostgreSQL (docker-compose’da `DB_USER` da kullanılır) |
-| `JWT_SECRET`, `COOKIE_SECRET`, `SESSION_SECRET`, `JWT_EXPIRES_IN` | Oturum ve güvenlik |
+| `UI_TAG`, `API_TAG` | Kullanılacak UI ve API imaj sürümü (örn. `v0.4.21`) |
+| `PORT` | API portu (varsayılan 8000) |
+| `DOMAIN` | Production domain (Traefik yönlendirmesi ve OIDC issuer için) |
+| `NODE_ENV` | Ortam (production / development) |
+| `DB_HOST`, `DB_PORT`, `DB_SSL`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD` | PostgreSQL bağlantısı |
+| `JWT_SECRET`, `JWT_EXPIRES_IN`, `COOKIE_SECRET`, `SESSION_SECRET` | Oturum ve güvenlik |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL` | Google OAuth |
 | `PUBLIC_API_ORIGIN` | OIDC sağlayıcısının dış adresi (issuer: `<origin>/api/oidc`); docker-compose’da `https://${DOMAIN}` olarak türetilir |
+| `R2_ACCOUNT_ID`, `R2_BUCKET_NAME`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | Cloudflare R2 (yüklemeler) |
+| `GITHUB_REPO_WEB_URL`, `GITHUB_FEEDBACK_TOKEN` | Uygulama içi geri bildirim entegrasyonu |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile (CAPTCHA) |
-| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` | Cloudflare R2 (yüklemeler) |
-| `DOMAIN` | Production domain (deploy için) |
-| `NODE_ENV` | Ortam (production / development) |
 
 UI ve API’ye özel değişkenler ilgili submodule README’lerinde.
 
-### Environment'ları nasıl set edeceğim?
+### Ortam değişkenleri nerede tutulur?
 
-İki yer var: **GitHub (sadece deploy için)** ve **sunucu (uygulama config)**.
-
-**1) GitHub Actions (deploy workflow)**  
-Ana repo → **Settings → Secrets and variables → Actions** bölümünde şu **repository secrets** tanımlanmalı (deploy job bunları kullanır):
-
-| Secret | Açıklama |
-|--------|----------|
-| `SSH_HOST` | Deploy edilecek sunucunun IP veya host adı |
-| `SSH_USER` | SSH kullanıcı adı |
-| `SSH_PRIVATE_KEY` | Bu kullanıcıya ait SSH private key (tüm içerik, `-----BEGIN ... END-----` dahil) |
-| `REPO_ACCESS_TOKEN` | Classic PAT (fine-grained değil); `repo` + `read:packages` yetkisi. GHCR'dan imaj çekmek için. |
-
-Workflow sadece sunucuya bağlanıp `docker-compose` ve `update.sh` atar; **uygulama ortam değişkenlerini (DB, JWT, R2 vb.) GitHub'dan sunucuya yazmaz.**
-
-**2) Sunucu (production .env)**  
-Tüm uygulama config'i **deploy edilen sunucuda** tutulur. Örneğin `/opt/trac/.env` (veya `SERVER_DIR` ne ise orada). Bu dosyayı ilk kurulumda siz oluşturursunuz; deploy workflow yalnızca `UI_TAG` ve `API_TAG` satırlarını günceller, diğer satırlara dokunmaz.
-
-Sunucuda olması gerekenler (örnek): `DOMAIN`, `NODE_ENV`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET`, `COOKIE_SECRET`, `SESSION_SECRET`, `GOOGLE_CLIENT_*`, `TURNSTILE_SECRET_KEY`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`. API'nin `trac-portal-api/.env.example` dosyası tam listeyi verir; sunucudaki `.env`'i buna göre doldurun.
+Uygulama yapılandırması **deploy edilen sunucudaki** `.env` dosyasında tutulur; bu dosya `docker-compose.yml` ve `update.sh` ile aynı dizinde durur. Bu dosya ilk kurulumda sunucuda oluşturulur; sürüm güncellemelerinde yalnızca `UI_TAG` ve `API_TAG` satırları değişir. Gerçek değerleri repoya, issue’lara veya PR’lara yazmayın.
 
 ## Docker (production)
 
-Kökteki `docker-compose.yml`: UI, API, PostgreSQL, certbot. İmajlar GHCR’dan; `UI_TAG`, `API_TAG` veya tek `TAG` ile sürüm seçilir.
+Kökteki `docker-compose.yml` üretim sunucusu içindir ve iki servis içerir: `api` ve `ui`. Topoloji şöyledir:
 
-```bash
-export UI_TAG=latest API_TAG=latest
-# .env dolu olmalı (DOMAIN, DB_*, JWT_*, vb.)
-docker compose up -d
-```
+- Her iki servis de `internal` ağındadır; `ui` ayrıca dış `edge` ağı üzerinden sunucudaki Traefik’e bağlanır ve `DOMAIN` adresinden yayınlanır.
+- `api`, dış `data` ağındaki PostgreSQL’e bağlanır.
+- İmajlar GHCR’dan çekilir; sürüm `UI_TAG` ve `API_TAG` ile seçilir.
 
-Yerel geliştirme için API ve UI’yı ayrı çalıştırın; ilgili submodule README’sine bakın.
+`edge` ve `data` ağları ve Traefik/PostgreSQL bileşenleri sunucuda hazır olmalıdır; bu dosya yerelde tek başına çalışmaz. Yerel geliştirme için API ve UI’yı ayrı çalıştırın; ilgili submodule README’sine bakın.
 
 ## İç ağdan erişim (LAN)
 
@@ -134,7 +125,7 @@ UI ve API'yi aynı makinede çalıştırıp **iç ağdaki diğer cihazlardan** (
 
 ## Deployment (ürün sahipleri)
 
-Ana repoda [.github/workflows/deploy.yml](../.github/workflows/deploy.yml) manuel tetiklenir (workflow_dispatch). UI/API sürümü seçilebilir (varsayılan latest). SSH ile sunucuya dosya atılır, GHCR’dan imaj çekilir. Gerekli repo secret’ları: `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `REPO_ACCESS_TOKEN`. Bu süreci ürün sahipleri, merge sonrası son testin ardından başlatır.
+Canlıya alma işlemi ürün sahipleri tarafından, merge sonrası son testin ardından manuel olarak yapılır. Geliştiricilerin deploy tetiklemesi beklenmez.
 
 ## Katkıda bulunanlar
 

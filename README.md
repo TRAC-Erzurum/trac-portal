@@ -25,6 +25,7 @@ Portal; çevrimlere katılım, operatör bilgileri ve istatistik yönetimini kol
 
 - API kurulum ve komutlar: [trac-portal-api/README.md](trac-portal-api/README.md)
 - UI kurulum ve komutlar: [trac-portal-ui/README.md](trac-portal-ui/README.md)
+- Yapay zeka ajanları ile çalışan geliştiriciler için: [AGENTS.md](AGENTS.md)
 
 ## Lisans
 
