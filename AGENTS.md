@@ -8,8 +8,8 @@ This file is for whoever orchestrates the program from the root repository. Agen
 
 | Path | GitHub repo | Stack | What lives there |
 |------|-------------|-------|------------------|
-| `trac-portal-api/` | TRAC-Erzurum/trac-portal-api | NestJS 11, TypeORM, PostgreSQL, yarn 1 | REST API under `/api`, OIDC provider at `/api/oidc`, auth, uploads |
-| `trac-portal-ui/` | TRAC-Erzurum/trac-portal-ui | Vue 3, Vite, shadcn-vue (reka-ui), Tailwind, vue-i18n, Pinia, yarn 1 | Web UI served by nginx; `/api` proxied to the API |
+| `trac-portal-api/` | TRAC-Erzurum/trac-portal-api | Node 20, NestJS 11, TypeORM, PostgreSQL, yarn 1 | REST API under `/api`, OIDC provider at `/api/oidc`, auth, uploads |
+| `trac-portal-ui/` | TRAC-Erzurum/trac-portal-ui | Node 20, Vue 3, Vite, shadcn-vue (reka-ui), Tailwind, vue-i18n, Pinia, yarn 1 | Web UI served by nginx; `/api` proxied to the API |
 | `mmdvm-link/` | TRAC-Erzurum/mmdvm-link | Python 3.11+, MQTT | Proof of concept: server and Pi-Star client for MMDVM link |
 
 Root contents:
@@ -27,7 +27,7 @@ Issues live **only** in the root repo. PRs live in the repo where the change is.
 - **The root never contains application code.** Application changes happen inside a submodule.
 - The root orchestrates: it plans work, writes task briefs, tracks issues, and bumps submodule pointers in root PRs (`chore: move submodules to ...`).
 - Implementation agents work **inside one submodule**. They must find everything they need in that submodule's own `AGENTS.md` and `docs/conventions/`. They should not need the root's rules beyond the cross-repo contracts in `docs/system/contracts.md`.
-- Any tool or agent may be used. Do not add tool-specific rule formats (`.cursor/`, `.github/agents/`, `.github/copilot-instructions.md`, `.idea/`, `.mdc`). The only allowed tool file is a one-line `CLAUDE.md` containing `@AGENTS.md`.
+- Any tool or agent may be used. Do not add tool-specific rule formats (editor-specific rule folders, Copilot instruction files, `.mdc` files, IDE project folders). The only allowed tool file is a one-line `CLAUDE.md` containing `@AGENTS.md`.
 - Submodule paths are touched by implementation agents only. The root orchestrator must not stage, commit, or modify files inside submodule directories.
 
 ## 3. Workflow

@@ -6,8 +6,8 @@ Components, repositories, and the production runtime topology of the TRAC Portal
 
 | Component | Repo | Stack | Role |
 |-----------|------|-------|------|
-| API | `trac-portal-api` (submodule) | NestJS 11, TypeORM, PostgreSQL | REST API under `/api`, auth (JWT cookie, Google OAuth), OIDC provider at `/api/oidc`, uploads under `/uploads` |
-| UI | `trac-portal-ui` (submodule) | Vue 3, Vite, shadcn-vue, Tailwind, vue-i18n, Pinia | Single-page web app, served by nginx in its container |
+| API | `trac-portal-api` (submodule) | Node 20, NestJS 11, TypeORM, PostgreSQL | REST API under `/api`, auth (JWT cookie, Google OAuth), OIDC provider at `/api/oidc`, uploads under `/uploads` |
+| UI | `trac-portal-ui` (submodule) | Node 20 (build), Vue 3, Vite, shadcn-vue, Tailwind, vue-i18n, Pinia | Single-page web app, served by nginx in its container |
 | MMDVM link | `mmdvm-link` (submodule) | Python 3.11+, MQTT | Proof of concept: server and Pi-Star client for MMDVM link traffic. Not part of the web runtime below |
 | Root | `trac-portal` | Docker Compose, shell scripts | Issues, production compose file, deployment helper scripts, docs |
 

@@ -24,14 +24,14 @@ Rules that the API and UI must both follow. A change to any of these is a cross-
 
 ## Roles
 
-Global and branch roles are defined in the API (`src/auth/enums/role.enum.ts`) and mirrored in the UI (`src/lib/ui-helpers.ts`, route `meta.minRole`). The current rank order, highest first:
+Roles are defined in the API (`src/auth/enums/role.enum.ts`) and mirrored in the UI (`src/lib/ui-helpers.ts`, route `meta.minRole`). There are two kinds:
 
-1. `super_admin` (global)
-2. `president` (branch)
-3. `admin` (branch)
-4. `member` (branch)
-5. `volunteer` (branch)
-6. `guest` (global)
+- **GlobalRole** (portal-wide): `guest`, `super_admin`.
+- **BranchRole** (per branch membership): `president`, `admin`, `member`, `volunteer`.
+
+Rank, highest first: `super_admin` 60 > `president` 50 > `admin` 40 > `member` 30 > `volunteer` 20 > `guest` 10.
+
+`@Roles(X)` in the API means minimum rank: a request passes if the user's effective role ranks at or above `X`. The UI route `meta.minRole` follows the same meaning.
 
 The API decides access; the UI only hides or shows routes. A role change must update both repos. Adding a role is a cross-repo contract change that needs owner approval.
 

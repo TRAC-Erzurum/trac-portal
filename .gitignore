@@ -6,3 +6,4 @@ certs
 uploads
 backups
 volumes/tls-certs
+.idea/
