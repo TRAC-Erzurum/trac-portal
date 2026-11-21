@@ -86,7 +86,7 @@ Kökte `.env.example` → `.env` kopyalayın. Değişkenlerin tam listesi ve anl
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL` | Google OAuth |
 | `PUBLIC_API_ORIGIN` | OIDC sağlayıcısının dış adresi (issuer: `<origin>/api/oidc`); docker-compose’da `https://${DOMAIN}` olarak türetilir |
 | `R2_ACCOUNT_ID`, `R2_BUCKET_NAME`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | Cloudflare R2 (yüklemeler) |
-| `GITHUB_REPO_WEB_URL`, `GITHUB_FEEDBACK_TOKEN` | Uygulama içi geri bildirim entegrasyonu |
+| `GITHUB_REPO_WEB_URL`, `GITHUB_APP_ID`, `GITHUB_APP_INSTALLATION_ID`, `GITHUB_APP_PRIVATE_KEY` | Uygulama içi geri bildirim (GitHub App ile issue yönlendirme) |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile (CAPTCHA) |
 
 UI ve API’ye özel değişkenler ilgili submodule README’lerinde.

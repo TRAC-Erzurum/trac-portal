@@ -62,7 +62,9 @@ Submodule-specific variables are documented in each submodule's own docs.
 | Variable | Meaning |
 |----------|---------|
 | `GITHUB_REPO_WEB_URL` | Web URL of the root repository, used for links in the app (`.env.example`: `github.com/TRAC-Erzurum/trac-portal`). |
-| `GITHUB_FEEDBACK_TOKEN` | Token used by the in-app feedback feature to create issues. |
+| `GITHUB_APP_ID` | ID of the GitHub App used to forward feedback to issues. Feedback forwarding needs all three `GITHUB_APP_*` variables. |
+| `GITHUB_APP_INSTALLATION_ID` | Installation ID of that App on the repository. |
+| `GITHUB_APP_PRIVATE_KEY` | Private key of the App (PEM). Literal `\n` sequences are converted to newlines. Secret. |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile server-side secret for bot verification. |
 
 ## Notes
